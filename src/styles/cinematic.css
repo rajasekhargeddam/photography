@@ -1,4 +1,99 @@
 /* Public art direction. Admin retains its existing functional theme. */
+
+.cinematic-cursor-magic {
+  --magic-a: 187 82 54;
+  --magic-b: 58 107 173;
+  --magic-spark: #986b38;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: 360px;
+  height: 360px;
+  pointer-events: none;
+  opacity: 0;
+  contain: layout style paint;
+  transition: opacity 350ms;
+}
+:root[data-theme='dark'] .cinematic-cursor-magic {
+  --magic-a: 69 215 197;
+  --magic-b: 167 116 249;
+  --magic-spark: #efc987;
+}
+.cinematic-cursor-magic.is-visible {
+  opacity: 1;
+}
+.cinematic-cursor-magic span {
+  position: absolute;
+  pointer-events: none;
+}
+.cursor-aurora {
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      ellipse at 37% 43%,
+      rgb(var(--magic-a) / 0.25),
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 63% 57%,
+      rgb(var(--magic-b) / 0.22),
+      transparent 48%
+    );
+  filter: blur(12px);
+  animation: cursor-orbit 12s linear infinite;
+  animation-play-state: paused;
+}
+.cursor-orbit {
+  inset: 128px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 30deg,
+    transparent 10%,
+    rgb(var(--magic-a) / 0.7),
+    transparent 42%,
+    rgb(var(--magic-b) / 0.6),
+    transparent 82%
+  );
+  mask-image: radial-gradient(
+    circle,
+    transparent 65%,
+    #000 67%,
+    #000 68%,
+    transparent 70%
+  );
+  animation: cursor-orbit 7s linear infinite reverse;
+  animation-play-state: paused;
+}
+.cursor-dust {
+  left: 179px;
+  top: 179px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--magic-spark);
+  box-shadow:
+    35px -20px 1px var(--magic-spark),
+    -27px 33px 0 -0.4px var(--magic-spark),
+    54px 15px 0 -0.4px rgb(var(--magic-a)),
+    -48px -12px 1px rgb(var(--magic-b));
+  animation: cursor-orbit 18s linear infinite;
+  animation-play-state: paused;
+}
+.cinematic-cursor-magic.is-visible span {
+  animation-play-state: running;
+}
+@keyframes cursor-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
+  .cinematic-cursor-magic {
+    display: none;
+  }
+}
 .cinematic-site .ui-icon {
   flex: 0 0 auto;
   vertical-align: middle;

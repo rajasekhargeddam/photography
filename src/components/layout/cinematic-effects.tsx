@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { CursorMagic } from './cursor-magic';
 
 /** Progressive enhancement: content remains visible without JavaScript or motion. */
 export function CinematicEffects() {
@@ -120,5 +121,5 @@ export function CinematicEffects() {
       preference.removeEventListener('change', stopMotion);
     };
   }, [pathname]);
-  return null;
+  return <CursorMagic />;
 }
