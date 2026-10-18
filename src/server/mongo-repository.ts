@@ -5,6 +5,7 @@ export class MongoEnquiries implements EnquiryRepository {
   constructor(private collection: Collection<Enquiry>) {}
   async initialize() {
     await this.collection.createIndex({ createdAt: -1, _id: -1 });
+    await this.collection.createIndex({ status: 1, createdAt: -1, _id: -1 });
   }
   find(id: string) {
     return this.collection.findOne({ _id: id });
@@ -26,9 +27,9 @@ export class MongoEnquiries implements EnquiryRepository {
     );
     return result.matchedCount === 1;
   }
-  list(limit: number, offset: number) {
+  list(limit: number, offset: number, status?: Enquiry['status']) {
     return this.collection
-      .find()
+      .find(status ? { status } : {})
       .sort({ createdAt: -1, _id: -1 })
       .skip(offset)
       .limit(limit)

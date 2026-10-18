@@ -66,9 +66,16 @@ async function request(path: string, signal: AbortSignal) {
   }
   return response.json();
 }
-export async function fetchEnquiries(offset: number, signal: AbortSignal) {
+export async function fetchEnquiries(
+  offset: number,
+  signal: AbortSignal,
+  status?: Enquiry['status'],
+) {
   const result = listSchema.safeParse(
-    await request(`enquiries?limit=30&offset=${offset}`, signal),
+    await request(
+      `enquiries?limit=30&offset=${offset}${status ? `&status=${status}` : ''}`,
+      signal,
+    ),
   );
   if (!result.success)
     throw new Error(

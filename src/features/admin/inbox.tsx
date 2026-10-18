@@ -49,10 +49,12 @@ function ErrorNotice({
   );
 }
 function EnquiryList() {
+  const [filter, setFilter] = useState<Enquiry['status'] | 'ALL'>('CONFIRMED');
   const query = useInfiniteQuery({
-    queryKey: ['enquiries'],
+    queryKey: ['enquiries', filter],
     initialPageParam: 0,
-    queryFn: ({ pageParam, signal }) => fetchEnquiries(pageParam, signal),
+    queryFn: ({ pageParam, signal }) =>
+      fetchEnquiries(pageParam, signal, filter === 'ALL' ? undefined : filter),
     getNextPageParam: (lastPage, _pages, offset) =>
       lastPage.length === 30 ? offset + 30 : undefined,
   });
@@ -78,6 +80,28 @@ function EnquiryList() {
           {query.isFetching ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
+      <div
+        className="request-switch"
+        role="group"
+        aria-label="Quote request status"
+      >
+        {(
+          [
+            ['CONFIRMED', 'Sent to studio'],
+            ['ATTEMPTED', 'Saved quotes'],
+            ['ALL', 'All quotes'],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={filter === value}
+            onClick={() => setFilter(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="list-caption">
         <span>Newest first</span>
         <span>Received time · India</span>
@@ -102,8 +126,20 @@ function EnquiryList() {
           <span className="empty-symbol" aria-hidden="true">
             ↗
           </span>
-          <h2>No quote requests yet</h2>
-          <p>Requests appear here after visitors complete their details.</p>
+          <h2>
+            {filter === 'CONFIRMED'
+              ? 'No quotes sent to the studio yet'
+              : filter === 'ATTEMPTED'
+                ? 'No saved quotes awaiting submission'
+                : 'No quote requests yet'}
+          </h2>
+          <p>
+            {filter === 'CONFIRMED'
+              ? 'Quotes appear here when a client sends them to the studio.'
+              : filter === 'ATTEMPTED'
+                ? 'Quotes saved without sending appear here.'
+                : 'Requests appear here after visitors complete their details.'}
+          </p>
           <a href="/book" target="_blank" rel="noreferrer">
             Open booking page ↗
           </a>

@@ -146,13 +146,18 @@ export function createApi(getServices: () => Promise<Services>) {
             .object({
               limit: z.coerce.number().int().min(1).max(100).default(30),
               offset: z.coerce.number().int().min(0).max(100000).default(0),
+              status: z.enum(['ATTEMPTED', 'CONFIRMED']).optional(),
             })
             .strict()
             .safeParse(Object.fromEntries(url.searchParams));
           if (!query.success) throw new ApiFailure(400, 'Invalid pagination.');
           return json({
             enquiries: (
-              await repository.list(query.data.limit, query.data.offset)
+              await repository.list(
+                query.data.limit,
+                query.data.offset,
+                query.data.status,
+              )
             ).map(publicEnquiry),
           });
         }

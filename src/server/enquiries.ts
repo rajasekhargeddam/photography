@@ -101,7 +101,11 @@ export interface EnquiryRepository {
   find(id: string): Promise<Enquiry | null>;
   insert(value: Enquiry): Promise<boolean>;
   replace(value: Enquiry, previousRevision: string): Promise<boolean>;
-  list(limit: number, offset: number): Promise<Enquiry[]>;
+  list(
+    limit: number,
+    offset: number,
+    status?: Enquiry['status'],
+  ): Promise<Enquiry[]>;
 }
 export const hash = (value: string) =>
   createHash('sha256').update(value).digest('hex');
