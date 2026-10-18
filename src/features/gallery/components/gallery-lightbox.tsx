@@ -1,40 +1,61 @@
 'use client';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import {
+  isCloudinaryPhoto,
+  photographyImageLoader,
+  portfolioImageSizes,
+} from '@/lib/image-delivery';
 import { Icon } from '@/components/ui/icon';
 import type { ContentRecord } from '@/features/content/model';
 
 function Photo({
   photo,
   large = false,
+  sizes,
 }: {
   photo: ContentRecord;
   large?: boolean;
+  sizes?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   if (!photo.url || failed)
     return (
       <span className="photo-unavailable">Photo unavailable: {photo.alt}</span>
     );
-  const src = photo.url.startsWith('https://res.cloudinary.com/')
-    ? photo.url.replace(
-        '/image/upload/',
-        `/image/upload/f_auto,q_auto,c_limit,w_${large ? 1800 : 800}/`,
-      )
-    : photo.url;
+  const cloudinary = isCloudinaryPhoto(photo.url);
   return (
-    <Image
-      src={src}
-      alt={photo.alt ?? ''}
-      width={photo.width ?? 512}
-      height={photo.height ?? 286}
-      unoptimized
-      onError={() => setFailed(true)}
-    />
+    <span className="gallery-photo-frame">
+      <Image
+        src={photo.url}
+        alt={photo.alt ?? ''}
+        width={photo.width ?? 512}
+        height={photo.height ?? 286}
+        loader={cloudinary ? photographyImageLoader : undefined}
+        unoptimized={!cloudinary}
+        sizes={large ? '(min-width: 1800px) 1600px, 94vw' : sizes}
+        loading={large ? 'eager' : 'lazy'}
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+      {large && !loaded && (
+        <span className="photo-loading" role="status">
+          Loading photo…
+        </span>
+      )}
+    </span>
   );
 }
-export function GalleryLightbox({ photos }: { photos: ContentRecord[] }) {
+export function GalleryLightbox({
+  photos,
+  view = 'editorial',
+}: {
+  photos: ContentRecord[];
+  view?: 'editorial' | 'grid';
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   const [viewer, setViewer] = useState<{
     photos: ContentRecord[];
     index: number;
@@ -73,8 +94,17 @@ export function GalleryLightbox({ photos }: { photos: ContentRecord[] }) {
                 dialog.current?.showModal();
               }}
             >
-              <Photo photo={photo} />
+              <Photo photo={photo} sizes={portfolioImageSizes(view, index)} />
+              <span className="gallery-photo-caption" aria-hidden="true">
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <span>{photo.alt ?? 'A moment to remember'}</span>
+                <span className="gallery-open">↗</span>
+              </span>
             </button>
+            <figcaption className="photo-credit">
+              <span>{photo.category ?? 'Selected work'}</span>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+            </figcaption>
           </figure>
         ))}
       </div>
@@ -108,7 +138,27 @@ export function GalleryLightbox({ photos }: { photos: ContentRecord[] }) {
             </button>
           </div>
           {viewer && (
-            <div className="lightbox-photo">
+            <div
+              className="lightbox-photo"
+              onTouchStart={(event) => {
+                if (event.touches.length !== 1) {
+                  touchStart.current = null;
+                  return;
+                }
+                const touch = event.touches[0];
+                touchStart.current = { x: touch.clientX, y: touch.clientY };
+              }}
+              onTouchEnd={(event) => {
+                const start = touchStart.current;
+                touchStart.current = null;
+                if (!start || event.touches.length) return;
+                const touch = event.changedTouches[0];
+                const dx = touch.clientX - start.x;
+                const dy = touch.clientY - start.y;
+                if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5)
+                  move(dx < 0 ? 1 : -1);
+              }}
+            >
               <Photo
                 key={viewer.photos[viewer.index]._id}
                 photo={viewer.photos[viewer.index]}
@@ -134,6 +184,12 @@ export function GalleryLightbox({ photos }: { photos: ContentRecord[] }) {
               Next
             </button>
           </div>
+          {viewer && (
+            <p className="lightbox-caption" aria-live="polite">
+              {viewer.photos[viewer.index].alt}
+              {viewer.photos[viewer.index].sample ? ' · Sample photograph' : ''}
+            </p>
+          )}
         </div>
       </dialog>
     </>

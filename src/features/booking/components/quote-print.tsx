@@ -1,3 +1,4 @@
+import { uiCopy } from '@/config/copy';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { business } from '@/config/business';
@@ -70,13 +71,13 @@ export function QuotePrint({
           <dt>Status</dt>
           <dd>
             {saved.status === 'CONFIRMED'
-              ? 'Sent to studio - request confirmed'
-              : 'Saved estimate - not yet confirmed'}
+              ? uiCopy.status.sentQuote
+              : 'Saved quote - not sent to studio'}
           </dd>
         </div>
       </dl>
       <p className="quote-print-notice">
-        {sample ? 'Development sample prices' : 'Saved estimate'} · INR. Final
+        {sample ? 'Development sample prices' : 'Saved quote'} · INR. Final
         services, crew, deliverables and availability require studio
         confirmation.
       </p>
@@ -135,7 +136,7 @@ export function QuotePrint({
         })}
       </table>
       <section className="quote-print-total">
-        <span>{sample ? 'Total sample estimate' : 'Total saved estimate'}</span>
+        <span>{sample ? 'Total sample quote' : 'Total saved quote'}</span>
         <strong>{money(saved.total)}</strong>
       </section>
       {(details.albumQuantity ?? 0) > 0 && (

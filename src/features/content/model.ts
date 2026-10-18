@@ -89,6 +89,8 @@ export type ContentRecord = {
   url?: string;
   width?: number;
   height?: number;
+  bytes?: number;
+  uploadExpiresAt?: string;
   category?: (typeof categories)[number];
   alt?: string;
   name?: string;

@@ -8,11 +8,11 @@ import { usePagedFeed } from '@/lib/use-paged-feed';
 function CallbackList() {
   const feed = usePagedFeed<CallbackRequest>('/api/admin/callbacks');
   return (
-    <section aria-label="Callback requests">
+    <section aria-label="Call requests">
       <div className="page-heading">
         <div>
           <p className="eyebrow">Contact form</p>
-          <h1>Callback requests</h1>
+          <h1>Call requests</h1>
           <p className="muted">Customers who asked to speak with the studio.</p>
         </div>
         <button disabled={feed.loading} onClick={() => void feed.reload()}>
@@ -26,12 +26,12 @@ function CallbackList() {
       )}
       {feed.loading && <p role="status">Loading…</p>}
       {!feed.loading && !feed.error && !feed.items.length && (
-        <p>No callback requests yet.</p>
+        <p>No call requests yet.</p>
       )}
       <div className="content-grid">
         {feed.items.map((request) => (
           <article className="content-card" key={request._id}>
-            <p className="eyebrow">Callback request</p>
+            <p className="eyebrow">Call request</p>
             <h2>{request.name}</h2>
             <a href={`tel:+91${request.mobile}`}>{request.mobile}</a>
             <dl>
@@ -67,7 +67,7 @@ function CallbackList() {
         </button>
       )}
       <p className="footnote">
-        Callback requests do not reserve a date or contain a quote.
+        Call requests do not reserve a date or contain a quote.
       </p>
     </section>
   );
@@ -81,13 +81,13 @@ export function RequestsDashboard() {
           aria-pressed={section === 'quotes'}
           onClick={() => setSection('quotes')}
         >
-          Quotes
+          Quote requests
         </button>
         <button
           aria-pressed={section === 'callbacks'}
           onClick={() => setSection('callbacks')}
         >
-          Callback requests
+          Call requests
         </button>
       </div>
       {section === 'quotes' ? <AdminInbox /> : <CallbackList />}

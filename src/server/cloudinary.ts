@@ -31,6 +31,90 @@ export function managedPublicId(id: string) {
 export function isManagedPublicId(id: string) {
   return /^my-dream-photography\/[a-f0-9-]{36}$/.test(id);
 }
+function signFields(fields: Record<string, string>, secret: string) {
+  return createHash('sha256')
+    .update(
+      Object.entries(fields)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => key + '=' + value)
+        .join('&') + secret,
+    )
+    .digest('hex');
+}
+export function imageUploadGrant(publicId: string) {
+  if (!isManagedPublicId(publicId))
+    throw new ApiFailure(400, 'Invalid managed asset.');
+  const config = cloudinaryConfig();
+  const fields = {
+    public_id: publicId,
+    overwrite: 'false',
+    allowed_formats: 'jpg,png,webp',
+    timestamp: String(Math.floor(Date.now() / 1000)),
+  };
+  return {
+    url: 'https://api.cloudinary.com/v1_1/' + config.cloud + '/image/upload',
+    fields: {
+      ...fields,
+      api_key: config.key,
+      signature: signFields(fields, config.secret),
+    },
+  };
+}
+export async function verifiedUploadedImage(publicId: string) {
+  if (!isManagedPublicId(publicId))
+    throw new ApiFailure(400, 'Invalid managed asset.');
+  const config = cloudinaryConfig();
+  const response = await fetch(
+    'https://api.cloudinary.com/v1_1/' +
+      config.cloud +
+      '/resources/image/upload/' +
+      encodeURIComponent(publicId),
+    {
+      headers: {
+        Authorization:
+          'Basic ' +
+          Buffer.from(config.key + ':' + config.secret).toString('base64'),
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(30000),
+    },
+  );
+  if (response.status === 404)
+    throw new ApiFailure(
+      409,
+      'The image upload is not complete yet. Please try again.',
+    );
+  if (!response.ok)
+    throw new ApiFailure(
+      502,
+      'Image verification is temporarily unavailable. Please try again; your upload can be verified without uploading again.',
+    );
+  const result = await response.json();
+  if (
+    result.public_id !== publicId ||
+    result.resource_type !== 'image' ||
+    result.type !== 'upload' ||
+    !['jpg', 'png', 'webp'].includes(result.format) ||
+    !Number.isSafeInteger(result.width) ||
+    result.width < 1 ||
+    !Number.isSafeInteger(result.height) ||
+    result.height < 1 ||
+    !Number.isSafeInteger(result.bytes) ||
+    result.bytes < 1 ||
+    typeof result.secure_url !== 'string' ||
+    !result.secure_url.startsWith(
+      'https://res.cloudinary.com/' + config.cloud + '/image/upload/',
+    )
+  ) {
+    throw new ApiFailure(502, 'The uploaded image could not be verified.');
+  }
+  return {
+    url: result.secure_url as string,
+    width: result.width as number,
+    height: result.height as number,
+    bytes: result.bytes as number,
+  };
+}
 async function cloudinaryRequest(
   action: 'upload' | 'destroy',
   fields: Record<string, string>,

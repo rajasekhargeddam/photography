@@ -1,31 +1,56 @@
-# Website theme
+# Cinematic public design system
 
-The public website, booking flow, and studio admin share the tokens in
-`src/styles/tokens.css`. Light and dark themes use the same semantic names.
+The public-facing application uses `src/styles/cinematic.css`, scoped to
+`.cinematic-site`. Studio admin retains the original theme in `tokens.css`.
 
-- Warm ivory backgrounds, charcoal text, and bronze accents preserve the studio's
-  existing photographic identity. Use `--background`, `--surface`, and
-  `--surface-raised` for canvas, inset sections, and raised panels.
-- Playfair Display is the heading font (regular). Plus Jakarta Sans is the body
-  and control font (regular and semibold). Both are bundled locally.
-- Use `--type-page`, `--type-section`, and `--type-card` for heading hierarchy.
-  The photographic homepage hero can use its larger display size.
-- Containers use `--content-width` and `--gutter`; sections use `--section-space`.
-  Booking panels use `--flow-width` and standalone state panels use `--form-width`.
-- Controls and cards have square corners. Filter chips and avatars retain their
-  functional pill/circle shapes. Use the radius tokens instead of pixel values.
-- Primary actions use `--primary` / `--on-primary`, and hover actions use
-  `--accent` / `--on-accent`. Success, warning, and error states have semantic
-  foreground and soft background tokens.
-- Use the shared `Button`, `ButtonLink`, and `PageState` components for new
-  actions and standalone status screens. Existing booking and admin controls
-  use the same tokens while retaining their domain-specific behaviour.
-- All form fields inherit the body font; touch controls are at least 44px tall.
-  Keep visible keyboard focus, invalid-field borders, and reduced-motion support.
+## Visual direction
 
-Image overlays use the fixed `--image-*` palette to stay legible in both themes.
-Printed quotes deliberately retain a light paper palette independent of the
-screen theme.
+The default experience is a deep forest/charcoal gallery with champagne accents,
+large Playfair Display headings, and restrained Plus Jakarta Sans body text.
+The existing theme switch also offers an ivory daylight treatment and remembers
+an existing preference. Fonts are bundled locally; no new dependencies were added.
 
-When extending a page, prefer semantic theme tokens over new colour literals.
-Check mobile (390px), tablet (768px), and desktop (1440px), including dark mode.
+The opening photograph fills the viewport. Navigation floats on a translucent
+surface with an opaque fallback. Gallery images form a staggered editorial wall;
+the lightbox retains uncropped photographs, keyboard navigation, and native dialog
+focus handling. Existing content, sample labels, links, and integrations remain.
+
+## Shared rules
+
+- Public colour, spacing, type, radius, and glass tokens live in `cinematic.css`.
+  Base semantic success, warning, and error tokens come from `tokens.css`.
+- Primary actions use champagne in night mode and forest in daylight mode.
+  Outlined actions and category chips use the same shape and focus treatment.
+- Photography has minimal rounding; consultation panels have softer corners.
+  Controls retain a minimum 44px touch target and form inputs a 16px font size.
+- Public sections use the shared container and responsive section spacing.
+- Quote options, question order, conditional steps, saved data, pricing, and API
+  behavior are unchanged. Only the question section is keyed for step reveals.
+
+## Motion and fallbacks
+
+`CinematicEffects` progressively adds one-time intersection reveals and a subtle
+pointer tilt on photographic and selection cards. Work is limited to visible
+content and animation frames; effects are cleaned up on navigation. Static content
+is visible when scripting, intersection observation, or animation APIs are absent.
+
+Route entrances animate a persistent wrapper without keying or remounting the
+booking provider. Supporting browsers add a small scroll-linked hero drift.
+Touch devices do not receive pointer tilt. Reduced-motion preferences disable
+all public animation, transitions, tilt, and slideshow autoplay. Glass surfaces
+have readable backgrounds without backdrop-filter support.
+
+Printed quote layouts retain their existing paper palette and business data.
+
+## Validation
+
+Check public pages at 390px, 768px, and 1440px, in both themes. Verify gallery
+filters, lightbox next/previous/Escape, mobile menu, form labels and focus, quote
+validation and running totals, and reduced-motion behavior. Run lint, typecheck,
+the application tests, and the production build after functional changes.
+
+Creative references: [Per Appelgren](https://perappelgren.de/) and
+[Guillaume Tomasi](https://guillaumetomasi.com/), interpreted as an original
+photography-led editorial direction rather than copied layouts.
+
+The final editorial pass adds a studio manifesto and service index, an accessible Editorial/Grid gallery switch, category captions, a descriptive lightbox caption, a layered quote introduction, and a typographic closing invitation. Gallery layout changes preserve filtering, feed state, and lightbox behavior.

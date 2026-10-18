@@ -1,4 +1,5 @@
 'use client';
+import { uiCopy } from '@/config/copy';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -50,7 +51,7 @@ export function SiteHeader() {
           <div className="header-actions">
             <ThemeToggle />
             <ButtonLink href="/book" className="header-cta">
-              Plan Your Event
+              {uiCopy.actions.buildQuote}
             </ButtonLink>
             <button
               className="icon-button menu-trigger"
@@ -94,7 +95,7 @@ export function SiteHeader() {
           </div>
           <nav aria-label="Mobile navigation">{links(true)}</nav>
           <ButtonLink href="/book" onClick={() => dialog.current?.close()}>
-            Plan Your Event <Icon name="arrow" />
+            {uiCopy.actions.buildQuote} <Icon name="arrow" />
           </ButtonLink>
           <p className="mobile-menu-location">Balighattam, Andhra Pradesh</p>
         </div>

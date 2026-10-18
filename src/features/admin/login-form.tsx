@@ -28,7 +28,7 @@ export function LoginForm() {
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Unable to sign in. Please retry.',
+          : 'Unable to sign in. Please try again.',
       );
       setPending(false);
     }

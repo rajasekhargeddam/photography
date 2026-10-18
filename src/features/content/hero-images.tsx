@@ -1,5 +1,9 @@
 'use client';
 import Image from 'next/image';
+import {
+  isCloudinaryPhoto,
+  photographyImageLoader,
+} from '@/lib/image-delivery';
 import { useEffect, useState } from 'react';
 import { usePagedFeed } from '@/lib/use-paged-feed';
 import type { ContentRecord } from './model';
@@ -30,29 +34,18 @@ export function HeroImages() {
   }, [count, paused, reduced]);
   return (
     <>
-      <Image
-        src="/images/home/stitch-7.jpg"
-        alt=""
-        fill
-        sizes="100vw"
-        preload
-        className="hero-photo"
-      />
+      {!count && <div className="hero-atmosphere" aria-hidden="true" />}
       {photos.map((photo, position) => (
         <Image
           key={photo._id}
-          src={
-            photo.url!.startsWith('https://res.cloudinary.com/')
-              ? photo.url!.replace(
-                  '/image/upload/',
-                  '/image/upload/f_auto,q_auto,c_limit,w_1920/',
-                )
-              : photo.url!
+          src={photo.url!}
+          loader={
+            isCloudinaryPhoto(photo.url!) ? photographyImageLoader : undefined
           }
           alt=""
           fill
           sizes="100vw"
-          unoptimized
+          unoptimized={!isCloudinaryPhoto(photo.url!)}
           className={`hero-photo hero-slide${position === index % count ? ' is-active' : ''}`}
           onError={() => setFailed((old) => [...old, photo._id])}
         />

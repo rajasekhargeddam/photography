@@ -1,41 +1,61 @@
 'use client';
+import { uiCopy } from '@/config/copy';
 import { useState } from 'react';
 import { categories, type ContentRecord } from './model';
 import { usePagedFeed } from '@/lib/use-paged-feed';
 import { GalleryLightbox } from '@/features/gallery/components/gallery-lightbox';
+import { YouTubeThumbnail } from '@/components/ui/youtube-thumbnail';
 
 function FeedStatus({
   feed,
   empty,
   paginated = true,
+  label,
 }: {
   feed: ReturnType<typeof usePagedFeed<ContentRecord>>;
   empty: string;
   paginated?: boolean;
+  label?: 'pictures' | 'films';
 }) {
   return (
-    <div className="feed-status">
+    <div
+      className={`feed-status${label ? ' portfolio-pagination' : ''}${label && feed.more ? ' portfolio-pagination--more' : ''}`}
+    >
+      {label && feed.items.length > 0 && (
+        <p className="collection-count" aria-live="polite">
+          Showing {feed.items.length}
+          {feed.total !== null ? ` of ${feed.total}` : ''}{' '}
+          {feed.total === 1 ? label.slice(0, -1) : label}
+        </p>
+      )}
       {feed.error && (
         <div role="alert">
           <p>{feed.error}</p>
           <button
             className="button button--outline"
-            onClick={() => void feed.reload()}
+            onClick={() => void feed.retry()}
             disabled={feed.loading}
           >
-            Try again
+            {uiCopy.actions.tryAgain}
           </button>
         </div>
       )}
-      {feed.loading && <p role="status">Loading…</p>}
+      {feed.loading && !(feed.more && paginated && !feed.error) && (
+        <p role="status">Loading…</p>
+      )}
       {!feed.loading && !feed.error && !feed.items.length && <p>{empty}</p>}
       {!feed.error && feed.more && paginated && (
         <button
-          className="button button--outline"
+          className={`button ${label === 'pictures' ? 'button--primary portfolio-more-button' : 'button--outline'}`}
           disabled={feed.loading}
           onClick={() => void feed.loadMore()}
         >
-          Load more
+          {feed.loading
+            ? 'Loading…'
+            : label
+              ? `Load more ${label}`
+              : 'Load more'}
+          {label === 'pictures' && <span aria-hidden="true">↓</span>}
         </button>
       )}
     </div>
@@ -44,39 +64,89 @@ function FeedStatus({
 function PhotoCollection({
   category,
   limit,
+  view,
+  active = true,
 }: {
   category: string;
   limit?: number;
+  view: 'editorial' | 'grid';
+  active?: boolean;
 }) {
-  const params = new URLSearchParams({ limit: String(limit ?? 30) });
+  const params = new URLSearchParams({ limit: String(limit ?? 12) });
+  if (!limit) params.set('pagination', '1');
   if (category !== 'All') params.set('category', category);
   const feed = usePagedFeed<ContentRecord>(
     `/api/content/gallery?${params}`,
-    limit ?? 30,
+    limit ?? 12,
+    { enabled: active, refreshOnFocus: false },
   );
   return (
     <>
-      <p className="collection-count" role="status">
-        {!feed.loading && !feed.error
-          ? `${feed.items.length} ${category === 'All' ? '' : `${category} `}photos${feed.more && !limit ? ' loaded' : ''}`
-          : ''}
-      </p>
+      {limit && (
+        <p className="collection-count" role="status">
+          {!feed.loading && !feed.error
+            ? `${feed.items.length} ${category === 'All' ? '' : `${category} `}photos${feed.more && !limit ? ' loaded' : ''}`
+            : ''}
+        </p>
+      )}
       {feed.items.some((photo) => photo.sample) && (
         <p className="collection-count">Includes sample photography.</p>
       )}
-      <GalleryLightbox photos={feed.items} />
+      <div
+        className={`collection-window${feed.more && !limit && feed.items.length ? ' collection-window--more' : ''}`}
+      >
+        <GalleryLightbox photos={feed.items} view={view} />
+        {feed.more && !limit && feed.items.length > 0 && (
+          <div className="collection-continuation" aria-hidden="true" />
+        )}
+      </div>
       <FeedStatus
         feed={feed}
         paginated={!limit}
         empty="No photos in this collection yet. Please check back soon."
+        label={!limit ? 'pictures' : undefined}
       />
     </>
   );
 }
-export function PublicGallery({ preview = false }: { preview?: boolean }) {
+export function PublicGallery({
+  preview = false,
+  active = true,
+}: {
+  preview?: boolean;
+  active?: boolean;
+}) {
   const [category, setCategory] = useState('All');
+  const [view, setView] = useState<'editorial' | 'grid'>('editorial');
   return (
-    <div>
+    <div className={`gallery-presentation gallery-presentation--${view}`}>
+      <div className="gallery-view-bar">
+        <p>
+          {preview
+            ? 'A few frames from our world'
+            : 'A collection of moments, yours to explore'}
+        </p>
+        <div
+          className="gallery-view-switch"
+          role="group"
+          aria-label="Gallery layout"
+        >
+          <button
+            type="button"
+            aria-pressed={view === 'editorial'}
+            onClick={() => setView('editorial')}
+          >
+            <span aria-hidden="true">▥</span> Editorial
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === 'grid'}
+            onClick={() => setView('grid')}
+          >
+            <span aria-hidden="true">▦</span> Grid
+          </button>
+        </div>
+      </div>
       {!preview && (
         <div
           className="gallery-filters"
@@ -99,6 +169,8 @@ export function PublicGallery({ preview = false }: { preview?: boolean }) {
         key={category}
         category={category}
         limit={preview ? 8 : undefined}
+        view={view}
+        active={active}
       />
     </div>
   );
@@ -159,13 +231,19 @@ export function PublicTestimonials({ preview = false }: { preview?: boolean }) {
     </>
   );
 }
-function VideoCard({ video }: { video: ContentRecord }) {
+function VideoCard({
+  video,
+  active = true,
+}: {
+  video: ContentRecord;
+  active?: boolean;
+}) {
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
   return (
     <article className="video-card">
       <div className="video-frame">
-        {playing && !failed ? (
+        {playing && !failed && active ? (
           <iframe
             loading="lazy"
             src={`https://www.youtube-nocookie.com/embed/${video.videoId}?playsinline=1&rel=0`}
@@ -185,8 +263,15 @@ function VideoCard({ video }: { video: ContentRecord }) {
             }}
             aria-label={`Play ${video.title}`}
           >
-            <span aria-hidden="true">▶</span>
-            <span>{failed ? 'Try playing again' : 'Play film'}</span>
+            <YouTubeThumbnail videoId={video.videoId} />
+            <span className="video-play-overlay">
+              <span className="video-play-icon" aria-hidden="true">
+                ▶
+              </span>
+              <span className="video-play-label">
+                {failed ? 'Try again' : 'Play film'}
+              </span>
+            </span>
           </button>
         )}
       </div>
@@ -206,23 +291,31 @@ function VideoCard({ video }: { video: ContentRecord }) {
     </article>
   );
 }
-export function PublicVideos({ preview = false }: { preview?: boolean }) {
-  const limit = preview ? 1 : 30;
+export function PublicVideos({
+  preview = false,
+  active = true,
+}: {
+  preview?: boolean;
+  active?: boolean;
+}) {
+  const limit = preview ? 1 : 6;
   const feed = usePagedFeed<ContentRecord>(
-    `/api/content/videos?limit=${limit}`,
+    `/api/content/videos?limit=${limit}${preview ? '' : '&pagination=1'}`,
     limit,
+    { enabled: active, refreshOnFocus: false },
   );
   return (
     <>
       <div className={`video-grid${preview ? ' video-grid--preview' : ''}`}>
         {feed.items.map((video) => (
-          <VideoCard key={video._id} video={video} />
+          <VideoCard key={video._id} video={video} active={active} />
         ))}
       </div>
       <FeedStatus
         feed={feed}
         paginated={!preview}
         empty="Our films will appear here soon."
+        label={!preview ? 'films' : undefined}
       />
     </>
   );

@@ -1,4 +1,5 @@
 'use client';
+import { uiCopy } from '@/config/copy';
 import { ceremonyName } from '../booking/quote';
 import { QuotePrint, SaveQuotePdf } from '../booking/components/quote-print';
 import Link from 'next/link';
@@ -23,7 +24,9 @@ function Status({ status }: { status: Enquiry['status'] }) {
   return (
     <span className={`status ${status.toLowerCase()}`}>
       <i aria-hidden="true" />
-      {status === 'CONFIRMED' ? 'Confirmed' : 'Attempted'}
+      {status === 'CONFIRMED'
+        ? uiCopy.status.sentQuote
+        : uiCopy.status.savedQuote}
     </span>
   );
 }
@@ -40,7 +43,7 @@ function ErrorNotice({
     <div className="error" role="alert">
       <p>{error.message}</p>
       <button disabled={pending} onClick={retry}>
-        Retry
+        {uiCopy.actions.tryAgain}
       </button>
     </div>
   );
@@ -64,7 +67,7 @@ function EnquiryList() {
         <div>
           <p className="eyebrow">Studio inbox</p>
           <h1 ref={heading} tabIndex={-1}>
-            Enquiries
+            Quote requests
           </h1>
           <p className="muted">Your next conversation starts here.</p>
         </div>
@@ -81,7 +84,7 @@ function EnquiryList() {
       </div>
       {query.isPending && (
         <p role="status" className="empty">
-          Loading enquiries…
+          Loading quote requests…
         </p>
       )}
       {query.isError && (
@@ -99,7 +102,7 @@ function EnquiryList() {
           <span className="empty-symbol" aria-hidden="true">
             ↗
           </span>
-          <h2>No enquiries yet</h2>
+          <h2>No quote requests yet</h2>
           <p>Requests appear here after visitors complete their details.</p>
           <a href="/book" target="_blank" rel="noreferrer">
             Open booking page ↗
@@ -130,7 +133,11 @@ function EnquiryList() {
                     </div>
                   </div>
                   <div className="row-event">
-                    <strong>{item.details.eventType}</strong>
+                    <strong>
+                      {item.details.eventType === 'Marriage'
+                        ? 'Wedding'
+                        : item.details.eventType}
+                    </strong>
                     <span className="muted">
                       {item.details.ceremonies
                         ? `${item.details.ceremonies.length} ceremony / shoot${item.details.ceremonies.some((c) => c.dateUndecided) ? ' · dates to discuss' : ''}`
@@ -164,13 +171,14 @@ function EnquiryList() {
             disabled={query.isFetching}
             onClick={() => void query.fetchNextPage()}
           >
-            {query.isFetchingNextPage ? 'Loading…' : 'Load more enquiries'}
+            {query.isFetchingNextPage ? 'Loading…' : 'Load more quote requests'}
           </button>
         </div>
       )}
       {!!groups.length && (
         <p className="footnote">
-          Attempted = details saved. Confirmed = client confirmed the request.
+          Saved quote = details saved. Sent to studio = client requested
+          follow-up.
         </p>
       )}
     </>
@@ -199,11 +207,11 @@ function EnquiryDetail({ id }: { id: string }) {
         />
       )}
       <Link className="back-link" href="/admin/requests">
-        ← All enquiries
+        ← All quote requests
       </Link>
       {query.isPending && (
         <p role="status" className="empty">
-          Loading enquiry…
+          Loading quote request…
         </p>
       )}
       {query.isError && (
@@ -217,7 +225,7 @@ function EnquiryDetail({ id }: { id: string }) {
         <>
           <div className="page-heading detail-heading">
             <div>
-              <p className="eyebrow">Enquiry details</p>
+              <p className="eyebrow">Quote request details</p>
               <h1 ref={heading} tabIndex={-1}>
                 {record.details.name}
               </h1>
@@ -242,13 +250,17 @@ function EnquiryDetail({ id }: { id: string }) {
               </a>
               <p className="muted">
                 {record.status === 'ATTEMPTED'
-                  ? 'Details saved. The client has not confirmed yet.'
+                  ? 'Details saved. The client has not sent the quote yet.'
                   : 'Discuss requirements, availability and payment.'}
               </p>
             </section>
             <section className="panel">
               <p className="eyebrow">Event</p>
-              <h2>{record.details.eventType}</h2>
+              <h2>
+                {record.details.eventType === 'Marriage'
+                  ? 'Wedding'
+                  : record.details.eventType}
+              </h2>
               <dl>
                 <div>
                   <dt>
@@ -327,8 +339,8 @@ function EnquiryDetail({ id }: { id: string }) {
               <div className="total">
                 <span>
                   {record.details.pricingStatus === 'DEVELOPMENT_SAMPLE'
-                    ? 'Development sample estimate · INR'
-                    : 'Saved estimate · INR'}
+                    ? 'Development sample quote · INR'
+                    : 'Saved quote · INR'}
                 </span>
                 <strong>{money(record.details.total)}</strong>
               </div>
@@ -349,7 +361,7 @@ function EnquiryDetail({ id }: { id: string }) {
                 </div>
                 {record.confirmedAt && (
                   <div>
-                    <dt>Confirmed</dt>
+                    <dt>Sent to studio</dt>
                     <dd>{receivedAt(record.confirmedAt)} IST</dd>
                   </div>
                 )}
@@ -364,7 +376,8 @@ function EnquiryDetail({ id }: { id: string }) {
             </section>
           </div>
           <p className="footnote">
-            A confirmed request does not reserve a date or record payment.
+            A quote sent to the studio does not reserve a date or record
+            payment.
           </p>
         </>
       )}

@@ -1,4 +1,6 @@
 'use client';
+import { uiCopy } from '@/config/copy';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UnknownAction } from '@reduxjs/toolkit';
@@ -130,32 +132,64 @@ export function BookingWizard() {
       )}
       {intro ? (
         <section className="guided-intro">
-          <p className="guided-eyebrow">A quote built around you</p>
-          <h1>
-            Your moments.
-            <br />
-            Your choices. Your <em>quote.</em>
-          </h1>
-          <p>
-            Choose the occasions and coverage you need. Build a photography and
-            video estimate, one question at a time.
-          </p>
-          <ul>
-            <li>✓ Choose what matters</li>
-            <li>✓ See your running estimate</li>
-            <li>✓ Review before sending</li>
-          </ul>
-          <button className="guided-primary" onClick={() => go('event')}>
-            Let’s build my quote →
-          </button>
-          <p className="guided-note">
-            Development sample prices. Final services, availability and charges
-            need studio confirmation.
-          </p>
+          <div className="guided-intro-copy">
+            <p className="guided-eyebrow">A quote built around you</p>
+            <h1>
+              Your moments.
+              <br />
+              Your choices. Your <em>quote.</em>
+            </h1>
+            <p>
+              Choose the occasions and coverage you need. Build a photography
+              and video quote, one question at a time.
+            </p>
+            <ul>
+              <li>✓ Choose what matters</li>
+              <li>✓ See your running quote</li>
+              <li>✓ Review before sending</li>
+            </ul>
+            <button className="guided-primary" onClick={() => go('event')}>
+              {uiCopy.actions.buildQuote} →
+            </button>
+            <p className="guided-note">
+              Development sample prices. Final services, availability and
+              charges need studio confirmation.
+            </p>
+          </div>
+          <div className="guided-intro-visual" aria-hidden="true">
+            <div className="quote-portrait depth-frame">
+              <Image
+                src="/images/home/stitch-0.jpg"
+                alt=""
+                fill
+                sizes="(max-width: 900px) 75vw, 35vw"
+              />
+              <span>
+                Every detail.
+                <br />
+                <em>Entirely yours.</em>
+              </span>
+            </div>
+            <div className="quote-inset">
+              <Image
+                src="/images/home/stitch-2.jpg"
+                alt=""
+                fill
+                sizes="(max-width: 900px) 35vw, 15vw"
+              />
+            </div>
+            <span className="quote-visual-caption">
+              A celebration, imagined together.
+            </span>
+          </div>
         </section>
       ) : (
         <>
-          <section className="guided-question" aria-labelledby="question-title">
+          <section
+            key={q.id}
+            className="guided-question"
+            aria-labelledby="question-title"
+          >
             <p className="guided-eyebrow">
               Step {index + 1}
               {draft.eventType ? ` of ${questions.length}` : ''} ·{' '}
@@ -381,7 +415,7 @@ export function BookingWizard() {
                 className="guided-back"
                 onClick={() => router.push('/book/summary')}
               >
-                Return to quote review
+                {uiCopy.actions.reviewQuote}
               </button>
             )}
             <p className="guided-note">
@@ -409,8 +443,7 @@ export function BookingWizard() {
                   <p className="guided-eyebrow">Your quote is ready</p>
                   <h2 id="contact-title">Let’s make it yours.</h2>
                   <p>
-                    Enter your contact details to save and reveal the full
-                    estimate.
+                    Enter your contact details to save and review your quote.
                   </p>
                   {!!errors.length && (
                     <div role="alert" className="booking-errors">
@@ -448,10 +481,10 @@ export function BookingWizard() {
                     />
                   </div>
                   <button type="submit" className="guided-primary">
-                    {pending ? 'Saving…' : 'Reveal my quote →'}
+                    {pending ? 'Saving…' : uiCopy.actions.saveReviewQuote}
                   </button>
                   <p className="guided-note">
-                    Continuing saves your enquiry and allows My Dream
+                    Continuing saves your quote request and allows My Dream
                     Photography to contact you, even if you do not confirm the
                     request.
                   </p>

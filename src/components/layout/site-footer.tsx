@@ -1,3 +1,4 @@
+import { uiCopy } from '@/config/copy';
 import Link from 'next/link';
 import { business } from '@/config/business';
 import { navigation } from '@/config/navigation';
@@ -8,6 +9,20 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="container">
+        <div className="footer-invitation">
+          <p className="eyebrow">Every story starts somewhere</p>
+          <Link href="/contact" className="footer-invitation-link">
+            <span>
+              Let’s make
+              <br />
+              <em>something timeless.</em>
+            </span>
+            <span className="invitation-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </Link>
+          <p>Your people. Your celebration. Your next chapter.</p>
+        </div>
         <div className="footer-top">
           <Brand />
           <p>Moments Pass. Memories Stay.</p>
@@ -30,7 +45,7 @@ export function SiteFooter() {
           <div>
             <h2 className="eyebrow">Your next celebration</h2>
             <ButtonLink href="/book" variant="text">
-              Plan Your Event <Icon name="arrow" />
+              {uiCopy.actions.buildQuote} <Icon name="arrow" />
             </ButtonLink>
             <p className="footer-note">
               <a href={`tel:${business.phone}`}>{business.phone}</a>

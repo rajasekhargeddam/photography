@@ -181,3 +181,46 @@ test('hero endpoints require an admin session before accessing storage', async (
     assert.equal(result.status, 401);
   }
 });
+
+test('admin portfolio counts cover all categories independently of filtered pagination', async () => {
+  const service = new ContentService({
+    aggregate() {
+      return {
+        toArray: async () => [
+          { _id: { category: 'Wedding', state: 'ready' }, count: 42 },
+          { _id: { category: 'Wedding', state: 'deleted' }, count: 3 },
+          { _id: { category: 'Birthday', state: 'pending' }, count: 1 },
+        ],
+      };
+    },
+  } as unknown as Collection<ContentRecord>);
+  service.list = async () => [];
+  const response = await service.handle(
+    new Request(
+      'http://localhost/api/admin/content/gallery?category=Birthday&limit=1',
+    ),
+    'gallery',
+    undefined,
+    true,
+  );
+  const body = await response.json();
+  assert.deepEqual(
+    body.categoryCounts.find(
+      (row: { category: string }) => row.category === 'Wedding',
+    ),
+    { category: 'Wedding', current: 42, pending: 0, removed: 3 },
+  );
+  assert.equal(
+    body.categoryCounts.find(
+      (row: { category: string }) => row.category === 'Birthday',
+    ).pending,
+    1,
+  );
+  const publicResponse = await service.handle(
+    new Request('http://localhost/api/content/gallery'),
+    'gallery',
+    undefined,
+    false,
+  );
+  assert.equal((await publicResponse.json()).categoryCounts, undefined);
+});

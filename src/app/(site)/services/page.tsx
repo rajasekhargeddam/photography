@@ -1,3 +1,4 @@
+import { uiCopy } from '@/config/copy';
 import type { Metadata } from 'next';
 import { Container, Section } from '@/components/ui/layout';
 import {
@@ -49,7 +50,7 @@ export default function Page() {
                   <h2>{service.name}</h2>
                   <p>{service.description}</p>
                   <ButtonLink href="/book" variant="text">
-                    Plan Your Event <Icon name="arrow" />
+                    {uiCopy.actions.buildQuote} <Icon name="arrow" />
                   </ButtonLink>
                 </div>
               </article>

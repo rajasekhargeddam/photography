@@ -30,7 +30,7 @@ export default async function RequestsLayout({
         <Link href="/admin/content/hero">Home hero</Link>
         <Link href="/admin/content/gallery">Portfolio</Link>
         <Link href="/admin/content/testimonials">Testimonials</Link>
-        <Link href="/admin/content/videos">Videos</Link>
+        <Link href="/admin/content/videos">Films</Link>
       </nav>
       <main id="admin-main" tabIndex={-1}>
         {children}

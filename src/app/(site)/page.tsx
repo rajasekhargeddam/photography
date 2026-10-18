@@ -1,3 +1,4 @@
+import { uiCopy } from '@/config/copy';
 import { HeroImages } from '@/features/content/hero-images';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -32,23 +33,74 @@ export default function HomePage() {
         <Container className="hero-content">
           <Eyebrow>My Dream Photography</Eyebrow>
           <h1 id="home-title">
-            Moments Pass.
+            <span>Moments Pass.</span>
             <br />
-            Memories Stay.
+            <em>Memories Stay.</em>
           </h1>
           <p>Weddings, pre-weddings and the moments in between.</p>
           <div className="home-actions">
             <ButtonLink href="/contact">
-              BOOK YOUR DATE <Icon name="arrow" />
+              {uiCopy.actions.contactStudio} <Icon name="arrow" />
             </ButtonLink>
             <ButtonLink href="/book" variant="outline">
-              BUILD YOUR QUOTE
+              {uiCopy.actions.buildQuote}
             </ButtonLink>
           </div>
         </Container>
+        <div className="hero-side-note" aria-hidden="true">
+          A little light. A lifetime of feeling.
+        </div>
+        <a className="hero-scroll" href="#selected-work">
+          <span>Discover our stories</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+        <div className="hero-edition" aria-hidden="true">
+          01 — Moments, made timeless
+        </div>
       </section>
 
-      <Section id="selected-work" aria-labelledby="work-title">
+      <Section className="studio-manifesto" aria-labelledby="manifesto-title">
+        <Container>
+          <div className="manifesto-index">
+            <span>01 / The way we see it</span>
+            <span>My Dream · A photography studio</span>
+          </div>
+          <Eyebrow>More than a photograph</Eyebrow>
+          <h2 id="manifesto-title">
+            The way it looked.
+            <br />
+            <em>The way it felt.</em>
+          </h2>
+          <div className="manifesto-bottom">
+            <p>
+              The grand celebrations. The almost-missed glances. The people who
+              make it all mean something. A little of your world, held still.
+            </p>
+            <ButtonLink href="/about" variant="text">
+              Discover our approach <Icon name="arrow" />
+            </ButtonLink>
+          </div>
+          <nav className="story-index" aria-label="Explore our photography">
+            <a href="/services#weddings">
+              <span>01</span> Weddings <span aria-hidden="true">↗</span>
+            </a>
+            <a href="/services#pre-wedding">
+              <span>02</span> Just the two of you{' '}
+              <span aria-hidden="true">↗</span>
+            </a>
+            <a href="/services#celebrations">
+              <span>03</span> Life’s celebrations{' '}
+              <span aria-hidden="true">↗</span>
+            </a>
+          </nav>
+        </Container>
+      </Section>
+
+      <Section
+        id="selected-work"
+        className="selected-work"
+        aria-labelledby="work-title"
+      >
         <Container>
           <div className="home-section-top">
             <div>
@@ -58,7 +110,7 @@ export default function HomePage() {
               </SectionHeading>
             </div>
             <ButtonLink href="/portfolio" variant="text">
-              View Portfolio <Icon name="arrow" />
+              {uiCopy.actions.viewPortfolio} <Icon name="arrow" />
             </ButtonLink>
           </div>
           <PublicGallery preview />
@@ -67,13 +119,16 @@ export default function HomePage() {
 
       <Section className="home-studio" aria-labelledby="studio-title">
         <Container className="studio-layout">
-          <div className="studio-photo">
+          <div className="studio-photo depth-frame">
             <Image
               src="/images/home/stitch-6.jpg"
               alt="Sample image of a photographer working with a camera"
               fill
               sizes="(max-width: 700px) 90vw, 35vw"
             />
+            <span className="studio-photo-label">
+              Behind the lens <span>My Dream Photography</span>
+            </span>
           </div>
           <div>
             <Eyebrow>Our studio · Balighattam</Eyebrow>
@@ -98,7 +153,7 @@ export default function HomePage() {
           <div className="home-section-top">
             <SectionHeading id="films-title">Stories in motion.</SectionHeading>
             <ButtonLink href="/portfolio#videos" variant="text">
-              Explore films <Icon name="arrow" />
+              {uiCopy.actions.viewFilms} <Icon name="arrow" />
             </ButtonLink>
           </div>
           <PublicVideos preview />
@@ -118,7 +173,7 @@ export default function HomePage() {
               </SectionHeading>
             </div>
             <ButtonLink href="/testimonials" variant="text">
-              All Testimonials <Icon name="arrow" />
+              {uiCopy.actions.viewTestimonials} <Icon name="arrow" />
             </ButtonLink>
           </div>
           <PublicTestimonials preview />
@@ -136,10 +191,10 @@ export default function HomePage() {
           </div>
           <div className="visit-actions">
             <ButtonLink href="/book">
-              Plan Your Event <Icon name="arrow" />
+              {uiCopy.actions.buildQuote} <Icon name="arrow" />
             </ButtonLink>
             <ButtonLink href="/contact" variant="text">
-              Visit Our Studio <Icon name="arrow" />
+              {uiCopy.actions.contactStudio} <Icon name="arrow" />
             </ButtonLink>
           </div>
         </Container>

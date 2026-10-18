@@ -20,7 +20,7 @@ export function LogoutButton() {
       <button onClick={logout} disabled={pending}>
         {pending ? 'Signing out…' : 'Sign out'}
       </button>
-      {error && <span role="alert">Unable to sign out. Please retry.</span>}
+      {error && <span role="alert">Unable to sign out. Please try again.</span>}
     </>
   );
 }

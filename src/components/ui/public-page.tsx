@@ -1,3 +1,4 @@
+import { uiCopy } from '@/config/copy';
 import Image from 'next/image';
 import { Container, Eyebrow, Section } from './layout';
 import { ButtonLink } from './button';
@@ -47,7 +48,7 @@ export function EventCallout() {
       <Container>
         <h2>Make your next memory.</h2>
         <ButtonLink href="/book">
-          Plan Your Event <Icon name="arrow" />
+          {uiCopy.actions.buildQuote} <Icon name="arrow" />
         </ButtonLink>
       </Container>
     </Section>

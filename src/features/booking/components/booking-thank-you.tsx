@@ -1,4 +1,5 @@
 'use client';
+import { uiCopy } from '@/config/copy';
 import { useAppSelector } from '@/lib/store/hooks';
 import { Container, Eyebrow } from '@/components/ui/layout';
 import { ButtonLink } from '@/components/ui/button';
@@ -14,16 +15,18 @@ export function BookingThankYou() {
         <Container>
           <Eyebrow>My Dream Photography</Eyebrow>
           <h1>
-            {reference ? 'Your request is confirmed.' : 'Plan your event.'}
+            {reference
+              ? 'Your quote has been sent.'
+              : uiCopy.actions.buildQuote}
           </h1>
           <p className="booking-note">
             {reference
               ? 'Our studio will call you to discuss your event, availability and payment. Your date is not reserved yet.'
-              : 'Choose your event and services to send an enquiry.'}
+              : 'Choose your event and services to build your quote.'}
           </p>
           {quote && <SaveQuotePdf />}
           <ButtonLink href={reference ? '/' : '/book'}>
-            {reference ? 'Back to home' : 'Plan Your Event'}
+            {reference ? uiCopy.actions.backHome : uiCopy.actions.buildQuote}
           </ButtonLink>
         </Container>
       </section>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Container, Section } from '@/components/ui/layout';
 import { PageIntro, EventCallout } from '@/components/ui/public-page';
-import { PublicGallery, PublicVideos } from '@/features/content/public-content';
+import { PortfolioBrowser } from '@/features/content/portfolio-browser';
 export const metadata: Metadata = {
   title: 'Portfolio',
   robots: { index: false, follow: true },
@@ -14,18 +14,7 @@ export default function Page() {
       </div>
       <Section className="public-content">
         <Container>
-          <PublicGallery />
-        </Container>
-      </Section>
-      <Section id="videos" aria-labelledby="videos-title">
-        <Container>
-          <div className="home-section-top">
-            <h2 id="videos-title" className="section-heading">
-              Videos
-            </h2>
-            <p>Celebrations, in motion.</p>
-          </div>
-          <PublicVideos />
+          <PortfolioBrowser />
         </Container>
       </Section>
       <EventCallout />

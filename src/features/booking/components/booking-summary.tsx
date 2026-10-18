@@ -1,4 +1,5 @@
 'use client';
+import { uiCopy } from '@/config/copy';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/store/hooks';
@@ -64,13 +65,13 @@ export function BookingSummary() {
     return (
       <section className="guided-quote">
         <div className="guided-question">
-          <h1>Build your quote</h1>
+          <h1>{uiCopy.actions.buildQuote}</h1>
           <p>
-            Choose your coverage and save your details to see the full estimate.
+            Choose your coverage and save your details to review your quote.
             Refreshing the page clears your draft.
           </p>
           <Link className="guided-primary" href="/book">
-            Start my quote →
+            {uiCopy.actions.buildQuote} →
           </Link>
         </div>
       </section>
@@ -82,7 +83,7 @@ export function BookingSummary() {
         <div className="guided-total">
           <span>Your sample quote</span>
           <strong aria-live="polite">{money(total)}</strong>
-          <span>{dirty ? 'Unsaved changes' : 'Saved estimate'}</span>
+          <span>{dirty ? 'Unsaved changes' : uiCopy.status.savedQuote}</span>
         </div>
         <section className="guided-question guided-summary">
           <p className="guided-eyebrow">Made around your moments</p>
@@ -296,8 +297,8 @@ export function BookingSummary() {
             <div className="guided-final-total">
               <span>
                 {dirty
-                  ? 'Updated sample estimate · save to review'
-                  : 'Saved sample estimate · INR'}
+                  ? 'Updated sample quote · save to review'
+                  : 'Saved sample quote · INR'}
               </span>
               <strong>{money(total)}</strong>
             </div>
@@ -320,13 +321,13 @@ export function BookingSummary() {
                   ? 'Saving…'
                   : 'Sending…'
                 : dirty
-                  ? 'Save changes & review'
-                  : 'Send my quote to the studio →'}
+                  ? 'Save changes'
+                  : uiCopy.actions.sendQuote}
             </button>
             <p className="guided-note" role="status">
               {dirty
                 ? 'Save your edits before sending the updated quote.'
-                : 'Your details are saved. Sending confirms this request for studio follow-up; it does not reserve a date or collect payment.'}
+                : 'Your details are saved. Sending requests studio follow-up; it does not reserve a date or collect payment.'}
             </p>
             <SaveQuotePdf disabled={dirty || pending} />
             <button

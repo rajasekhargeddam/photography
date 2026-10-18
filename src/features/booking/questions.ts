@@ -99,7 +99,7 @@ export function questionsFor(draft: BookingDraft): Question[] {
   questions.push({
     id: 'contact',
     kind: 'contact',
-    title: 'Your estimate is ready',
+    title: 'Your quote is ready',
     subtitle:
       'Share your name and mobile number to save and review your quote.',
   });

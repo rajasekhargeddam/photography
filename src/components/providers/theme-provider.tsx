@@ -11,13 +11,13 @@ function getTheme(): Theme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 function getServerTheme(): Theme {
-  return 'light';
+  return 'dark';
 }
 function subscribe(notify: () => void) {
   function onStorage(event: StorageEvent) {
     if (event.key !== themeStorageKey && event.key !== null) return;
     document.documentElement.dataset.theme =
-      event.newValue === 'dark' ? 'dark' : 'light';
+      event.newValue === 'light' ? 'light' : 'dark';
     notify();
   }
   window.addEventListener(changeEvent, notify);

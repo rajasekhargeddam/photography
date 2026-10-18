@@ -1,4 +1,5 @@
 'use client';
+import { uiCopy } from '@/config/copy';
 import { useRef, useState, type FormEvent } from 'react';
 import { callbackInput } from './model';
 import { categories } from '../content/model';
@@ -37,14 +38,14 @@ export function CallbackForm() {
       if (!response.ok) {
         const result = await response.json();
         throw new Error(
-          result.message ?? 'Unable to send your request. Please retry.',
+          result.message ?? 'Unable to send your request. Please try again.',
         );
       }
       setSent(true);
     } catch (cause) {
       setError(
         cause instanceof TypeError
-          ? 'Connection interrupted. Please retry; your details are still here.'
+          ? 'Connection interrupted. Please try again; your details are still here.'
           : (cause as Error).message,
       );
     } finally {
@@ -55,7 +56,7 @@ export function CallbackForm() {
   if (sent)
     return (
       <div className="callback-success" role="status">
-        <h3>Your callback request is sent.</h3>
+        <h3>Your call request has been sent.</h3>
         <p>
           Our studio will contact you about your event. Your date is not
           reserved until confirmed with the studio.
@@ -71,7 +72,7 @@ export function CallbackForm() {
           <input name="name" autoComplete="name" maxLength={100} required />
         </label>
         <label>
-          Phone number{' '}
+          Mobile number{' '}
           <input
             name="mobile"
             type="tel"
@@ -84,7 +85,7 @@ export function CallbackForm() {
           />
         </label>
         <label>
-          Date of event{' '}
+          Event date{' '}
           <input name="eventDate" type="date" min={indiaToday()} required />
         </label>
         <label>
@@ -114,7 +115,7 @@ export function CallbackForm() {
           </p>
         )}
         <button type="submit" className="button button--primary">
-          {busy ? 'Sending…' : 'Request a Call'}
+          {busy ? 'Sending…' : uiCopy.actions.requestCall}
         </button>
       </fieldset>
       <p className="callback-note">

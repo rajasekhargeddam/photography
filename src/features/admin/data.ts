@@ -50,11 +50,11 @@ async function request(path: string, signal: AbortSignal) {
     response = await fetch(`/api/admin/${path}`, { signal, cache: 'no-store' });
   } catch (error) {
     if (signal.aborted) throw error;
-    throw new Error('Unable to reach the booking server. Please retry.');
+    throw new Error('Unable to reach the booking server. Please try again.');
   }
   if (!response.ok) {
     if (response.status === 404)
-      throw new Error('This enquiry could not be found.');
+      throw new Error('This quote request could not be found.');
     if (response.status === 401 || response.status === 403) {
       if (typeof window !== 'undefined')
         window.location.replace('/admin/login');
@@ -62,7 +62,7 @@ async function request(path: string, signal: AbortSignal) {
     }
     if (response.status === 429)
       throw new Error('Please wait a minute before refreshing again.');
-    throw new Error('The booking server is unavailable. Please retry.');
+    throw new Error('The booking server is unavailable. Please try again.');
   }
   return response.json();
 }
@@ -71,17 +71,21 @@ export async function fetchEnquiries(offset: number, signal: AbortSignal) {
     await request(`enquiries?limit=30&offset=${offset}`, signal),
   );
   if (!result.success)
-    throw new Error('The enquiry list could not be read. Please retry.');
+    throw new Error(
+      'The quote request list could not be read. Please try again.',
+    );
   return result.data.enquiries;
 }
 export async function fetchEnquiry(id: string, signal: AbortSignal) {
   if (!z.uuid().safeParse(id).success)
-    throw new Error('This enquiry link is invalid.');
+    throw new Error('This quote request link is invalid.');
   const result = enquirySchema.safeParse(
     await request(`enquiries/${encodeURIComponent(id)}`, signal),
   );
   if (!result.success)
-    throw new Error('The enquiry details could not be read. Please retry.');
+    throw new Error(
+      'The quote request details could not be read. Please try again.',
+    );
   return result.data;
 }
 function indiaDay(value: Date) {

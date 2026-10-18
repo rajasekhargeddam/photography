@@ -19,6 +19,8 @@ import {
   managedPublicId,
   uploadImage,
   validateImage,
+  imageUploadGrant,
+  verifiedUploadedImage,
 } from './cloudinary';
 import { readJson, json } from './http';
 
@@ -81,6 +83,71 @@ export function sampleContent(): ContentRecord[] {
 }
 export class ContentService {
   constructor(private readonly records: Collection<ContentRecord>) {}
+  private async reserve(record: ContentRecord) {
+    if (record.kind !== 'hero') {
+      await this.records.insertOne(record);
+      return;
+    }
+    for (let slot = 1; slot <= 5; slot++) {
+      try {
+        await this.records.insertOne({ ...record, heroSlot: slot });
+        return;
+      } catch (error) {
+        if ((error as { code?: number }).code !== 11000) throw error;
+      }
+    }
+    throw new ApiFailure(
+      409,
+      'You can have up to five hero images. Delete one before uploading another.',
+    );
+  }
+  async beginImageUpload(kind: 'gallery' | 'hero', request: Request) {
+    cloudinaryConfig();
+    const input = await readJson(request);
+    const parsed = imageInput.safeParse(input);
+    if (!parsed.success)
+      throw new ApiFailure(
+        400,
+        'Choose a valid image category and description.',
+      );
+    const id = randomUUID();
+    const publicId = managedPublicId(id);
+    const grant = imageUploadGrant(publicId);
+    await this.reserve({
+      _id: id,
+      kind,
+      ...parsed.data,
+      state: 'pending',
+      publicId,
+      createdAt: new Date().toISOString(),
+      // The signed grant can still finish an upload for an hour. Do not delete
+      // its ownership record early and risk a late upload becoming unmanaged.
+      uploadExpiresAt: new Date(Date.now() + 65 * 60000).toISOString(),
+    });
+    return { id, ...grant };
+  }
+  async completeImageUpload(kind: 'gallery' | 'hero', id: string) {
+    if (!z.uuid().safeParse(id).success)
+      throw new ApiFailure(400, 'Invalid upload reference.');
+    const record = await this.records.findOne({ _id: id, kind });
+    if (!record || record.state === 'deleted' || !record.publicId)
+      throw new ApiFailure(404, 'Upload not found.');
+    if (record.state === 'ready') return record;
+    // Never trust browser-provided URLs, dimensions, formats, or byte counts.
+    const image = await verifiedUploadedImage(record.publicId);
+    const updated = await this.records.updateOne(
+      { _id: id, kind, state: 'pending' },
+      { $set: { ...image, state: 'ready' }, $unset: { uploadExpiresAt: '' } },
+    );
+    if (!updated.modifiedCount) {
+      const current = await this.records.findOne({ _id: id, kind });
+      if (current?.state === 'ready') return current;
+      throw new ApiFailure(409, 'This upload is no longer available.');
+    }
+    const { uploadExpiresAt: _expiry, ...completed } = record;
+    void _expiry;
+    return { ...completed, ...image, state: 'ready' as const };
+  }
   async initialize() {
     await this.records.createIndex({ kind: 1, state: 1, createdAt: -1 });
     await this.records.createIndex(
@@ -211,6 +278,21 @@ export class ContentService {
     if (!record || record.state === 'deleted') return;
     if (
       record.state === 'pending' &&
+      record.uploadExpiresAt &&
+      Date.parse(record.uploadExpiresAt) > Date.now()
+    )
+      throw new ApiFailure(
+        409,
+        'This upload is reserved while it may still be running. Retry with the same selected photo to finish it, or remove this pending entry after ' +
+          new Date(record.uploadExpiresAt).toLocaleTimeString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit',
+          }) +
+          ' IST.',
+      );
+    if (
+      record.state === 'pending' &&
       Date.now() - Date.parse(record.createdAt) < 120000
     )
       throw new ApiFailure(
@@ -223,6 +305,52 @@ export class ContentService {
       { _id: id, kind },
       { $set: { state: 'deleted' }, $unset: { heroSlot: '' } },
     );
+  }
+  async changePhotoCategory(id: string, request: Request) {
+    if (!/^[a-zA-Z0-9-]{1,80}$/.test(id))
+      throw new ApiFailure(400, 'Invalid photo reference.');
+    const input = z
+      .object({
+        category: z.enum(categories),
+        previousCategory: z.enum(categories),
+      })
+      .strict()
+      .safeParse(await readJson(request));
+    if (!input.success)
+      throw new ApiFailure(400, 'Choose a valid photo category.');
+    const photo = await this.records.findOne({
+      _id: id,
+      kind: 'gallery',
+      state: 'ready',
+    });
+    if (!photo) throw new ApiFailure(404, 'Photo not found.');
+    if (photo.category !== input.data.previousCategory)
+      throw new ApiFailure(
+        409,
+        'This photo was changed elsewhere. Refresh the list before editing its category.',
+      );
+    const updated = await this.records.updateOne(
+      {
+        _id: id,
+        kind: 'gallery',
+        state: 'ready',
+        category: input.data.previousCategory,
+      },
+      {
+        $set: {
+          category: input.data.category,
+          ...(photo.alt === `${photo.category} photography`
+            ? { alt: `${input.data.category} photography` }
+            : {}),
+        },
+      },
+    );
+    if (!updated.matchedCount)
+      throw new ApiFailure(
+        409,
+        'This photo changed or was removed. Refresh the list and try again.',
+      );
+    return { success: true };
   }
   async handle(
     request: Request,
@@ -262,12 +390,84 @@ export class ContentService {
         limit.data,
         category.data,
       );
+      const total =
+        !admin &&
+        search.get('pagination') === '1' &&
+        (kind === 'gallery' || kind === 'videos')
+          ? await this.records.countDocuments({
+              kind,
+              state: 'ready',
+              ...(category.data ? { category: category.data } : {}),
+            })
+          : undefined;
+      const categoryCounts =
+        admin && kind === 'gallery'
+          ? await this.records
+              .aggregate<{
+                _id: { category: string; state: string };
+                count: number;
+              }>([
+                { $match: { kind: 'gallery' } },
+                {
+                  $group: {
+                    _id: { category: '$category', state: '$state' },
+                    count: { $sum: 1 },
+                  },
+                },
+              ])
+              .toArray()
+          : undefined;
       return json({
+        ...(total !== undefined
+          ? { total, hasMore: offset.data + items.length < total }
+          : {}),
+        ...(categoryCounts
+          ? {
+              categoryCounts: categories.map((category) => ({
+                category,
+                current: categoryCounts
+                  .filter(
+                    (row) =>
+                      row._id.category === category &&
+                      row._id.state === 'ready',
+                  )
+                  .reduce((sum, row) => sum + row.count, 0),
+                pending: categoryCounts
+                  .filter(
+                    (row) =>
+                      row._id.category === category &&
+                      row._id.state === 'pending',
+                  )
+                  .reduce((sum, row) => sum + row.count, 0),
+                removed: categoryCounts
+                  .filter(
+                    (row) =>
+                      row._id.category === category &&
+                      row._id.state === 'deleted',
+                  )
+                  .reduce((sum, row) => sum + row.count, 0),
+              })),
+            }
+          : {}),
         items: items.map(({ publicId, ...item }) =>
           admin ? { ...item, publicId } : item,
         ),
       });
     }
+    if (admin && request.method === 'PATCH' && kind === 'gallery' && id)
+      return json(await this.changePhotoCategory(id, request));
+    if (
+      admin &&
+      request.method === 'POST' &&
+      (kind === 'gallery' || kind === 'hero') &&
+      id
+    )
+      return json(
+        id === 'upload'
+          ? await this.beginImageUpload(kind, request)
+          : await this.completeImageUpload(kind, id),
+        id === 'upload' ? 201 : 200,
+      );
     if (admin && request.method === 'POST' && !id)
       return json(await this.create(kind, request), 201);
     if (admin && request.method === 'DELETE' && id) {

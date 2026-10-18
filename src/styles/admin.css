@@ -1,4 +1,18 @@
 .admin-surface {
+  .photo-category-editor {
+    display: grid;
+    gap: 0.75rem;
+    margin-block: 1rem;
+  }
+  .photo-category-editor select {
+    width: 100%;
+    min-width: 0;
+  }
+  .photo-category-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
   .request-switch {
     display: flex;
     flex-wrap: wrap;
@@ -639,4 +653,84 @@
 }
 .admin-surface .eyebrow {
   letter-spacing: 0.13em;
+}
+.portfolio-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 2rem;
+}
+.portfolio-categories button {
+  border-radius: 999px;
+  min-height: 44px;
+}
+.portfolio-categories button[aria-pressed='true'] {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.admin-surface .admin-film-thumbnail,
+.admin-surface .admin-film-preview {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--panel);
+  margin-bottom: 1rem;
+}
+.admin-surface .admin-film-preview {
+  max-width: 640px;
+}
+.admin-surface .admin-film-thumbnail img,
+.admin-surface .admin-film-preview img {
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+}
+.admin-surface .image-upload-progress {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  margin-block: 1rem 2rem;
+  background: var(--panel);
+}
+.admin-surface .image-upload-progress progress {
+  width: 100%;
+  height: 0.5rem;
+  accent-color: var(--accent);
+}
+.admin-surface .image-upload-progress button {
+  justify-self: start;
+}
+.photo-upload-queue {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+.photo-upload-queue li {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+.photo-upload-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.photo-upload-heading strong,
+.photo-upload-queue p {
+  overflow-wrap: anywhere;
+}
+.photo-upload-queue progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.photo-upload-queue button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin-top: 0.5rem;
 }

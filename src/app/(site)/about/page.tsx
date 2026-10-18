@@ -1,3 +1,4 @@
+import { uiCopy } from '@/config/copy';
 import type { Metadata } from 'next';
 import {
   Container,
@@ -36,9 +37,8 @@ export default function Page() {
               Photographs of your people, your celebrations and the moments that
               feel like you.
             </p>
-            <p>Explore our work and tell us what you have in mind.</p>
             <ButtonLink href="/portfolio" variant="outline">
-              Explore Our Work
+              {uiCopy.actions.viewPortfolio}
             </ButtonLink>
           </div>
         </Container>

@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       className={`${bodyFont.variable} ${headingFont.variable}`}
-      data-theme="light"
+      data-theme="dark"
       suppressHydrationWarning
     >
       <head>

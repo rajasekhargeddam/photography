@@ -29,7 +29,7 @@ test('historical print preserves saved package prices without requiring ceremony
   assert.match(html, /43,210/);
   assert.match(html, /Saved package/);
   assert.match(html, /Selected services subtotal/);
-  assert.match(html, /Total saved estimate/);
+  assert.match(html, /Total saved quote/);
   assert.doesNotMatch(
     html,
     /internal-package-id|Reference|Development sample|undefined|NaN/,
@@ -75,7 +75,7 @@ test('guided print uses snapshot amounts, groups, notes and sample notice for bo
     assert.match(html, /Development sample prices/);
     assert.match(
       html,
-      status === 'CONFIRMED' ? /request confirmed/ : /not yet confirmed/,
+      status === 'CONFIRMED' ? /Sent to studio/ : /not sent to studio/,
     );
     assert.doesNotMatch(html, /private-line-id|Reference|undefined|NaN/);
   }
