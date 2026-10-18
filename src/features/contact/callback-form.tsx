@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/ui/icon';
 import { uiCopy } from '@/config/copy';
 import { useRef, useState, type FormEvent } from 'react';
 import { callbackInput } from './model';
@@ -115,6 +116,7 @@ export function CallbackForm() {
           </p>
         )}
         <button type="submit" className="button button--primary">
+          <Icon name="phone" />
           {busy ? 'Sending…' : uiCopy.actions.requestCall}
         </button>
       </fieldset>

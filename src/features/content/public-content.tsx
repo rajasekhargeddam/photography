@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/ui/icon';
 import { uiCopy } from '@/config/copy';
 import { useState } from 'react';
 import { categories, type ContentRecord } from './model';
@@ -55,7 +56,7 @@ function FeedStatus({
             : label
               ? `Load more ${label}`
               : 'Load more'}
-          {label === 'pictures' && <span aria-hidden="true">↓</span>}
+          {label === 'pictures' && <Icon name="down" />}
         </button>
       )}
     </div>
@@ -136,14 +137,14 @@ export function PublicGallery({
             aria-pressed={view === 'editorial'}
             onClick={() => setView('editorial')}
           >
-            <span aria-hidden="true">▥</span> Editorial
+            <Icon name="editorial" /> Editorial
           </button>
           <button
             type="button"
             aria-pressed={view === 'grid'}
             onClick={() => setView('grid')}
           >
-            <span aria-hidden="true">▦</span> Grid
+            <Icon name="grid" /> Grid
           </button>
         </div>
       </div>
@@ -266,7 +267,7 @@ function VideoCard({
             <YouTubeThumbnail videoId={video.videoId} />
             <span className="video-play-overlay">
               <span className="video-play-icon" aria-hidden="true">
-                ▶
+                <Icon name="play" />
               </span>
               <span className="video-play-label">
                 {failed ? 'Try again' : 'Play film'}
@@ -284,7 +285,7 @@ function VideoCard({
           target="_blank"
           rel="noopener noreferrer"
         >
-          watch on YouTube ↗
+          watch on YouTube <Icon name="external" />
         </a>
         .
       </p>

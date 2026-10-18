@@ -48,7 +48,10 @@ export function SiteFooter() {
               {uiCopy.actions.buildQuote} <Icon name="arrow" />
             </ButtonLink>
             <p className="footer-note">
-              <a href={`tel:${business.phone}`}>{business.phone}</a>
+              <a href={`tel:${business.phone}`}>
+                <Icon name="phone" />
+                {business.phone}
+              </a>
             </p>
             <p className="footer-note">
               <a
@@ -56,13 +59,17 @@ export function SiteFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Get directions ↗
+                <Icon name="map-pin" />
+                Get directions
               </a>
             </p>
             {business.socialLinks.map((link) => (
               <p className="footer-note" key={link.label}>
                 <a href={link.url} target="_blank" rel="noopener noreferrer">
-                  {link.label} ↗
+                  <Icon
+                    name={link.label === 'Instagram' ? 'instagram' : 'external'}
+                  />
+                  {link.label}
                 </a>
               </p>
             ))}

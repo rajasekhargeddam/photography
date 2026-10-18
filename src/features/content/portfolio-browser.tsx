@@ -1,4 +1,5 @@
 'use client';
+import { Icon } from '@/components/ui/icon';
 import { useEffect, useRef, useState } from 'react';
 import { PublicGallery, PublicVideos } from './public-content';
 
@@ -82,7 +83,7 @@ export function PortfolioBrowser() {
                 ?.focus({ preventScroll: true });
             }}
           >
-            <span aria-hidden="true">{value === 'pictures' ? '▦' : '▷'}</span>
+            <Icon name={value === 'pictures' ? 'camera' : 'play'} />
             {value === 'pictures' ? 'Pictures' : 'Films'}
           </button>
         ))}

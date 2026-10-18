@@ -1,3 +1,59 @@
+.admin-surface .admin-photo-thumbnail {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.admin-surface .admin-photo-thumbnail span {
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.admin-surface .admin-photo-dialog {
+  width: min(1500px, 96vw);
+  max-width: 96vw;
+  max-height: 94dvh;
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 8px;
+}
+.admin-surface .admin-photo-dialog::backdrop {
+  background: rgb(0 0 0 / 0.8);
+}
+.admin-surface .admin-preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.admin-surface .admin-preview-toolbar p {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.admin-surface .admin-preview-image {
+  height: min(70dvh, 900px);
+  margin-block: 12px;
+  display: grid;
+  place-items: center;
+}
+.admin-surface .admin-preview-image img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+@media (max-width: 700px) {
+  .admin-surface .admin-photo-dialog {
+    padding: 10px;
+  }
+  .admin-surface .admin-preview-toolbar {
+    gap: 8px;
+  }
+}
 .admin-surface {
   .photo-category-editor {
     display: grid;
@@ -733,4 +789,312 @@
   max-width: 100%;
   overflow-wrap: anywhere;
   margin-top: 0.5rem;
+}
+
+/* Admin workspace: compact, static controls; public art direction stays scoped. */
+@media screen {
+  .admin-surface {
+    --type-page: 1.65rem;
+    --type-card: 1.05rem;
+    --section-space: 24px;
+    --gutter: 24px;
+    --radius-control: 6px;
+    font-size: 14px;
+    line-height: 1.45;
+    min-height: 100vh;
+  }
+  .admin-surface *,
+  .admin-surface *::before,
+  .admin-surface *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .admin-surface main {
+    max-width: 1680px;
+    padding: 24px;
+  }
+  .admin-surface .content-manager {
+    max-width: none;
+    padding: 0;
+  }
+  .admin-surface .site-header {
+    padding: 10px 24px;
+    gap: 12px;
+  }
+  .admin-surface .brand {
+    gap: 8px;
+  }
+  .admin-surface .brand small {
+    font-size: 10px;
+    letter-spacing: 0.07em;
+  }
+  .admin-surface .header-actions {
+    gap: 14px;
+    font-size: 12px;
+  }
+  .admin-surface .admin-navigation {
+    padding: 8px 24px;
+    gap: 6px 24px;
+    font-size: 13px;
+  }
+  .admin-surface .admin-navigation a {
+    padding-block: 4px;
+  }
+  .admin-surface h1,
+  .admin-surface h2,
+  .admin-surface h3 {
+    font-family: var(--font-body), sans-serif;
+  }
+  .admin-surface h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin: 3px 0 5px;
+  }
+  .admin-surface h2 {
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .admin-surface h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .admin-surface .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+  .admin-surface button,
+  .admin-surface .primary-button {
+    min-height: 36px;
+    padding: 7px 12px;
+    letter-spacing: 0;
+    font-size: 12px;
+  }
+  .admin-surface .page-heading {
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .admin-surface .request-switch {
+    margin-bottom: 16px;
+    gap: 6px;
+  }
+  .admin-surface .list-caption {
+    padding-top: 8px;
+  }
+  .admin-surface .day-group {
+    margin-top: 16px;
+  }
+  .admin-surface .group-heading {
+    font-size: 12px;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .admin-surface .group-heading span {
+    height: 20px;
+    min-width: 20px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  .admin-surface .enquiry-row {
+    padding: 10px 14px;
+    gap: 12px;
+    grid-template-columns:
+      minmax(160px, 1.5fr) minmax(130px, 1fr) minmax(110px, 1fr)
+      122px 70px 16px;
+  }
+  .admin-surface .row-client {
+    gap: 9px;
+  }
+  .admin-surface .avatar {
+    width: 30px;
+    height: 32px;
+    font:
+      600 14px var(--font-body),
+      sans-serif;
+    border-radius: 4px;
+  }
+  .admin-surface .status {
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+  .admin-surface .row-client .muted,
+  .admin-surface .row-event .muted,
+  .admin-surface .row-selection .muted {
+    margin-top: 1px;
+  }
+  .admin-surface .callback-rows {
+    border: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .admin-surface .callback-row {
+    display: grid;
+    grid-template-columns:
+      minmax(160px, 1.3fr) minmax(100px, 1fr) minmax(115px, 1fr)
+      minmax(150px, 1fr) minmax(90px, 0.7fr);
+    align-items: start;
+    gap: 12px;
+    padding: 10px 14px;
+    overflow-wrap: anywhere;
+  }
+  .admin-surface .callback-row + .callback-row {
+    border-top: 1px solid var(--border);
+  }
+  .admin-surface .callback-label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .admin-surface .callback-client a {
+    font-size: 12px;
+  }
+  .admin-surface .callback-notes summary {
+    cursor: pointer;
+    padding: 4px 0;
+    font-size: 12px;
+  }
+  .admin-surface .callback-notes p {
+    margin-top: 6px;
+  }
+  .admin-surface .content-form {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .admin-surface .content-form h2 {
+    margin-bottom: 10px;
+  }
+  .admin-surface .content-form fieldset {
+    gap: 10px;
+  }
+  .admin-surface .content-form input,
+  .admin-surface .content-form select,
+  .admin-surface .content-form textarea {
+    padding: 8px 10px;
+    min-height: 36px;
+  }
+  .admin-surface .content-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .admin-surface .content-card {
+    padding: 12px;
+  }
+  .admin-surface .content-card img {
+    height: 140px;
+    object-fit: contain;
+  }
+  .admin-surface .content-card button {
+    margin-top: 8px;
+  }
+  .admin-surface .content-card p {
+    margin-block: 4px;
+    font-size: 12px;
+  }
+  .admin-surface .portfolio-categories {
+    gap: 6px;
+    margin-block: 16px;
+  }
+  .admin-surface .portfolio-categories button {
+    min-height: 34px;
+    border-radius: 6px;
+  }
+  .admin-surface .photo-category-editor {
+    gap: 6px;
+    margin-block: 8px;
+  }
+  .admin-surface .photo-upload-queue {
+    gap: 8px;
+    margin-block: 12px;
+  }
+  .admin-surface .photo-upload-queue li {
+    padding: 10px;
+  }
+  .admin-surface .detail-grid {
+    gap: 14px;
+  }
+  .admin-surface .panel {
+    padding: 18px;
+  }
+  .admin-surface .panel h2 {
+    margin: 5px 0 12px;
+  }
+  .admin-surface dl > div {
+    padding: 7px 0;
+    gap: 12px;
+  }
+  .admin-surface .items li {
+    padding: 9px 0;
+  }
+  .admin-surface .empty {
+    padding: 28px 16px;
+    margin-top: 16px;
+  }
+  .admin-surface .error {
+    padding: 12px;
+    margin: 12px 0;
+  }
+  .admin-surface .back-link {
+    margin-bottom: 12px;
+  }
+  .admin-surface .footnote {
+    margin-top: 16px;
+  }
+  .admin-surface .load-more {
+    margin: 16px 0;
+  }
+  @media (max-width: 1100px) {
+    .admin-surface .enquiry-row {
+      grid-template-columns: minmax(150px, 1.5fr) minmax(100px, 1fr) 122px;
+      gap: 8px 12px;
+    }
+    .admin-surface .callback-row {
+      grid-template-columns: minmax(140px, 1.3fr) 1fr 1fr;
+    }
+  }
+  @media (max-width: 700px) {
+    .admin-surface main {
+      padding: 16px 12px;
+    }
+    .admin-surface .site-header {
+      padding: 10px 12px;
+    }
+    .admin-surface .admin-navigation {
+      padding: 6px 12px;
+      gap: 4px 16px;
+    }
+    .admin-surface h1 {
+      font-size: 23px;
+    }
+    .admin-surface .header-actions {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .admin-surface .enquiry-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding: 10px;
+      gap: 6px 10px;
+    }
+    .admin-surface .row-event {
+      padding-left: 39px;
+    }
+    .admin-surface .callback-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      padding: 12px;
+    }
+    .admin-surface .callback-client {
+      grid-column: 1 / -1;
+    }
+    .admin-surface button,
+    .admin-surface .primary-button {
+      min-height: 44px;
+    }
+    .admin-surface .content-form {
+      padding: 12px;
+    }
+    .admin-surface .content-grid {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+    }
+  }
 }

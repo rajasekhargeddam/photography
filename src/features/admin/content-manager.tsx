@@ -1,5 +1,10 @@
 'use client';
 import Image from 'next/image';
+import { AdminPhotoPreview } from './photo-preview';
+import {
+  isCloudinaryPhoto,
+  photographyImageLoader,
+} from '@/lib/image-delivery';
 import { PhotoBatchUpload } from './photo-batch-upload';
 import { YouTubeThumbnail } from '@/components/ui/youtube-thumbnail';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -57,6 +62,10 @@ async function api(url: string, options?: RequestInit) {
 }
 export function ContentManager({ kind }: { kind: ContentKind }) {
   const [videoUrl, setVideoUrl] = useState('');
+  const [preview, setPreview] = useState<{
+    photos: ContentRecord[];
+    index: number;
+  } | null>(null);
   const [items, setItems] = useState<ContentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -321,13 +330,37 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
         {items.map((item) => (
           <article className="content-card" key={item._id}>
             {(item.kind === 'gallery' || item.kind === 'hero') && item.url && (
-              <Image
-                src={item.url}
-                alt={item.alt ?? ''}
-                width={item.width ?? 512}
-                height={item.height ?? 286}
-                unoptimized
-              />
+              <button
+                className="admin-photo-thumbnail"
+                type="button"
+                aria-label={`Preview ${item.alt ?? 'photo'}`}
+                onClick={() => {
+                  const photos = items.filter(
+                    (photo) =>
+                      (photo.kind === 'gallery' || photo.kind === 'hero') &&
+                      Boolean(photo.url),
+                  );
+                  setPreview({
+                    photos,
+                    index: photos.findIndex((photo) => photo._id === item._id),
+                  });
+                }}
+              >
+                <Image
+                  src={item.url}
+                  alt={item.alt ?? ''}
+                  width={item.width ?? 512}
+                  height={item.height ?? 286}
+                  loader={
+                    isCloudinaryPhoto(item.url)
+                      ? photographyImageLoader
+                      : undefined
+                  }
+                  unoptimized={!isCloudinaryPhoto(item.url)}
+                  sizes="(max-width: 700px) 90vw, 320px"
+                />
+                <span>Preview photo</span>
+              </button>
             )}
             {(item.kind === 'gallery' || item.kind === 'hero') && (
               <>
@@ -465,6 +498,13 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
         >
           Load more
         </button>
+      )}
+      {preview && (
+        <AdminPhotoPreview
+          photos={preview.photos}
+          initialIndex={preview.index}
+          onClose={() => setPreview(null)}
+        />
       )}
     </section>
   );

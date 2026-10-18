@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { AdminInbox } from './inbox';
-import { receivedAt } from './data';
+import { groupByReceivedDay, receivedAt } from './data';
 import type { CallbackRequest } from '../contact/model';
 import { usePagedFeed } from '@/lib/use-paged-feed';
 
 function CallbackList() {
   const feed = usePagedFeed<CallbackRequest>('/api/admin/callbacks');
+  const groups = groupByReceivedDay(feed.items, (request) => request._id);
   return (
     <section aria-label="Call requests">
       <div className="page-heading">
@@ -28,42 +29,62 @@ function CallbackList() {
       {!feed.loading && !feed.error && !feed.items.length && (
         <p>No call requests yet.</p>
       )}
-      <div className="content-grid">
-        {feed.items.map((request) => (
-          <article className="content-card" key={request._id}>
-            <p className="eyebrow">Call request</p>
-            <h2>{request.name}</h2>
-            <a href={`tel:+91${request.mobile}`}>{request.mobile}</a>
-            <dl>
-              <div>
-                <dt>Event</dt>
-                <dd>{request.eventType}</dd>
-              </div>
-              <div>
-                <dt>Event date</dt>
-                <dd>
+      <div className="list-caption">
+        <span>Newest first</span>
+        <span>Received time · India</span>
+      </div>
+      {groups.map((group) => (
+        <section
+          key={group.key}
+          className="day-group"
+          aria-labelledby={`calls-day-${group.key}`}
+        >
+          <h2 id={`calls-day-${group.key}`} className="group-heading">
+            {group.label}
+            <span>{group.records.length}</span>
+          </h2>
+          <div className="callback-rows">
+            {group.records.map((request) => (
+              <article className="callback-row" key={request._id}>
+                <div className="callback-client">
+                  <h3>{request.name}</h3>
+                  <a href={`tel:+91${request.mobile}`}>{request.mobile}</a>
+                </div>
+                <div>
+                  <span className="callback-label">Event</span>
+                  <strong>{request.eventType}</strong>
+                </div>
+                <div>
+                  <span className="callback-label">Event date</span>
                   <time dateTime={request.eventDate}>
                     {new Intl.DateTimeFormat('en-IN', {
                       day: 'numeric',
-                      month: 'long',
+                      month: 'short',
                       year: 'numeric',
                       timeZone: 'UTC',
                     }).format(new Date(`${request.eventDate}T00:00:00Z`))}
                   </time>
-                </dd>
-              </div>
-              <div>
-                <dt>Received</dt>
-                <dd>{receivedAt(request.createdAt)} IST</dd>
-              </div>
-            </dl>
-            {request.notes && <p className="review-text">{request.notes}</p>}
-          </article>
-        ))}
-      </div>
+                </div>
+                <div>
+                  <span className="callback-label">Received · IST</span>
+                  <time dateTime={request.createdAt}>
+                    {receivedAt(request.createdAt)}
+                  </time>
+                </div>
+                {request.notes && (
+                  <details className="callback-notes">
+                    <summary>Client notes</summary>
+                    <p className="review-text">{request.notes}</p>
+                  </details>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
       {feed.more && (
         <button disabled={feed.loading} onClick={() => void feed.loadMore()}>
-          Load more
+          Load more call requests
         </button>
       )}
       <p className="footnote">

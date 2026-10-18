@@ -127,21 +127,30 @@ export const money = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 export function groupEnquiries(records: Enquiry[], now = new Date()) {
+  return groupByReceivedDay(records, (record) => record.id, now).map(
+    ({ records, ...group }) => ({ ...group, enquiries: records }),
+  );
+}
+export function groupByReceivedDay<T extends { createdAt: string }>(
+  records: T[],
+  identify: (record: T) => string,
+  now = new Date(),
+) {
   const today = indiaDay(now);
   const yesterday = new Date(`${today}T00:00:00Z`);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
   const yesterdayKey = yesterday.toISOString().slice(0, 10);
   const unique = [
-    ...new Map(records.map((record) => [record.id, record])).values(),
+    ...new Map(records.map((record) => [identify(record), record])).values(),
   ];
   unique.sort(
     (a, b) =>
       Date.parse(b.createdAt) - Date.parse(a.createdAt) ||
-      b.id.localeCompare(a.id),
+      identify(b).localeCompare(identify(a)),
   );
   const groups = new Map<
     string,
-    { key: string; label: string; enquiries: Enquiry[] }
+    { key: string; label: string; records: T[] }
   >();
   for (const record of unique) {
     const key = indiaDay(new Date(record.createdAt));
@@ -154,9 +163,9 @@ export function groupEnquiries(records: Enquiry[], now = new Date()) {
             : key === yesterdayKey
               ? 'Yesterday'
               : eventDate(key),
-        enquiries: [],
+        records: [],
       });
-    groups.get(key)!.enquiries.push(record);
+    groups.get(key)!.records.push(record);
   }
   return [...groups.values()];
 }

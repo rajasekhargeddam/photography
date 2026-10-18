@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ui/icon';
 import type { Metadata } from 'next';
 import {
   Container,
@@ -26,20 +27,40 @@ export default function Page() {
             <Eyebrow>Our studio</Eyebrow>
             <h2>My Dream Photography</h2>
             <address>{business.address}</address>
+            <a
+              className="studio-map-card"
+              href={business.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open My Dream Photography in Google Maps (opens in a new tab)"
+            >
+              <span className="studio-map-preview">
+                <iframe
+                  src={business.mapEmbedUrl}
+                  title="Map preview of My Dream Photography, Balighattam"
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+              </span>
+              <span className="studio-map-caption">
+                <span>
+                  <strong>Visit our studio</strong>
+                  <small>Balighattam, Andhra Pradesh</small>
+                </span>
+                <span className="studio-map-action">
+                  <Icon name="map-pin" /> Get directions{' '}
+                  <Icon name="external" />
+                </span>
+              </span>
+            </a>
             <div className="contact-actions">
               <a
                 className="button button--primary"
                 href={`tel:${business.phone}`}
               >
-                Call {business.phone}
-              </a>
-              <a
-                className="button button--outline"
-                href={business.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Get directions
+                <Icon name="phone" /> Call {business.phone}
               </a>
               {business.socialLinks.map((link) => (
                 <a
@@ -49,7 +70,10 @@ export default function Page() {
                   rel="noopener noreferrer"
                   className="button button--text"
                 >
-                  {link.label} ↗
+                  <Icon
+                    name={link.label === 'Instagram' ? 'instagram' : 'external'}
+                  />{' '}
+                  {link.label}
                 </a>
               ))}
             </div>
