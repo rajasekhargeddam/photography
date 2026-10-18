@@ -10,6 +10,16 @@ large Playfair Display headings, and restrained Plus Jakarta Sans body text.
 The existing theme switch also offers an ivory daylight treatment and remembers
 an existing preference. Fonts are bundled locally; no new dependencies were added.
 
+Daylight uses warm ivory (`#f7f4ee`), charcoal (`#242622`), bronze (`#80603d`),
+and off-white raised surfaces. Night uses deep forest (`#0d1512`), ivory text
+(`#f3f0e6`), and champagne actions (`#e2cea7`). Supporting text has at least
+5.35:1 contrast on the daylight background and 9.54:1 on the night background.
+Large editorial headings retain the serif; card titles, controls, form labels,
+and numeric information use the body family. Primary actions are filled,
+secondary actions outlined, and tertiary actions text-only. Contact forms stack
+below 900px to keep tablet fields comfortably wide. These refinements are scoped
+to the public site; the compact admin workspace and quote print palette remain separate.
+
 The opening photograph fills the viewport. Navigation floats on a translucent
 surface with an opaque fallback. Gallery images form a staggered editorial wall;
 the lightbox retains uncropped photographs, keyboard navigation, and native dialog

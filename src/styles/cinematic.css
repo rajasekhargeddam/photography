@@ -319,28 +319,30 @@
   }
 }
 .cinematic-site {
-  --background: #f1efe9;
-  --surface: #e8e5dd;
-  --surface-raised: #faf8f3;
-  --text: #20211e;
-  --muted: #64645c;
-  --border: #ccc9bd;
-  --primary: #2a302b;
-  --on-primary: #faf8f1;
-  --accent: #77603c;
-  --accent-soft: #e4dccb;
+  --background: #f7f4ee;
+  --surface: #eee8df;
+  --surface-raised: #fffdf8;
+  --text: #242622;
+  --muted: #69645c;
+  --border: #d7cfc1;
+  --control-border: #91897c;
+  --primary: #292f2a;
+  --on-primary: #fffdf8;
+  --accent: #80603d;
+  --accent-soft: #ede2d1;
   --on-accent: #ffffff;
   --focus: #7b5d2e;
-  --glass: rgb(250 248 243 / 0.88);
+  --glass: rgb(255 253 248 / 0.9);
   --glass-border: rgb(70 63 45 / 0.18);
   --radius-control: 999px;
   --radius-card: 18px;
   --content-width: 90rem;
   --gutter: clamp(1.25rem, 5vw, 6rem);
-  --section-space: clamp(5rem, 10vw, 10rem);
-  --type-page: clamp(3rem, 6.5vw, 6.5rem);
-  --type-section: clamp(2.5rem, 4.8vw, 5rem);
-  --type-card: clamp(1.5rem, 2vw, 2rem);
+  --section-space: clamp(4rem, 8vw, 8rem);
+  --type-page: clamp(3rem, 6vw, 6rem);
+  --type-section: clamp(2.25rem, 4.3vw, 4.5rem);
+  --type-card: clamp(1.35rem, 1.8vw, 1.75rem);
+  --shadow-card: 0 12px 36px rgb(67 51 30 / 0.06);
   --ease-cinema: cubic-bezier(0.2, 0.65, 0.25, 1);
   background: var(--background);
   color: var(--text);
@@ -348,17 +350,18 @@
   isolation: isolate;
 }
 :root[data-theme='dark'] .cinematic-site {
-  --background: #101411;
-  --surface: #181e19;
-  --surface-raised: #1d241f;
-  --text: #f0eee5;
-  --muted: #b0b7ac;
-  --border: #39433a;
-  --primary: #dfcda9;
-  --on-primary: #192019;
-  --accent: #dfcda9;
-  --accent-soft: #30382c;
-  --on-accent: #192019;
+  --background: #0d1512;
+  --surface: #151f19;
+  --surface-raised: #1c2921;
+  --text: #f3f0e6;
+  --muted: #b5bcb3;
+  --border: #34473b;
+  --control-border: #718273;
+  --primary: #e2cea7;
+  --on-primary: #17211a;
+  --accent: #e2cea7;
+  --accent-soft: #29382d;
+  --on-accent: #17211a;
   --focus: #ead6ae;
   --glass: rgb(22 29 24 / 0.88);
   --glass-border: rgb(230 232 208 / 0.17);
@@ -393,9 +396,11 @@
 .cinematic-site .button {
   min-height: 52px;
   padding: 1rem 1.7rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  gap: 1.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.065em;
+  line-height: 1.3;
+  gap: 1rem;
   transition:
     background-color 250ms,
     color 250ms,
@@ -2219,5 +2224,165 @@
   .cinematic-site .hero-atmosphere::before {
     right: -50%;
     top: 42%;
+  }
+}
+/* Public typography and interaction hierarchy. */
+.cinematic-site .public-intro p,
+.cinematic-site .public-story p,
+.cinematic-site .guided-intro-copy > p:not(.guided-eyebrow) {
+  font-size: 1rem;
+  line-height: 1.75;
+  max-width: 58ch;
+}
+.cinematic-site .desktop-nav a {
+  font-size: 0.8rem;
+}
+.cinematic-site .brand small {
+  font-size: 0.6rem;
+}
+.cinematic-site .video-card h3,
+.cinematic-site .testimonial-card h3,
+.cinematic-site .service-card h3 {
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+.cinematic-site .callback-panel .section-heading {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+.cinematic-site .button--primary:not(:disabled):hover,
+.cinematic-site .guided-primary:not(:disabled):hover {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.cinematic-site .button--outline {
+  background: transparent;
+  box-shadow: none;
+}
+.cinematic-site .button--outline:not(:disabled):hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--accent);
+}
+/* Keep image-backed hero controls readable over every photograph. */
+.cinematic-site .home-hero:not(:has(.hero-atmosphere)) .button--outline:hover {
+  background: rgb(255 255 255 / 0.13);
+  color: #fffdf8;
+  border-color: #fffdf8;
+}
+.cinematic-site .guided-primary {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.065em;
+}
+.cinematic-site .guided-back {
+  color: var(--muted);
+  font-weight: 500;
+}
+.cinematic-site .guided-back:hover {
+  color: var(--text);
+}
+.cinematic-site .guided-total,
+.cinematic-site .guided-final-total,
+.cinematic-site .guided-counter {
+  font-variant-numeric: tabular-nums;
+}
+.cinematic-site .callback-form label,
+.cinematic-site .guided-contact label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.cinematic-site :is(input, textarea, select) {
+  color: var(--text);
+  background: var(--surface-raised);
+  border-color: var(--control-border);
+  min-height: 48px;
+}
+.cinematic-site :is(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.cinematic-site :is(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+.cinematic-site :is(input, textarea, select)[aria-invalid='true'] {
+  border-color: var(--error);
+}
+.cinematic-site button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.cinematic-site .form-error,
+.cinematic-site .booking-errors {
+  padding: 1rem 1.2rem;
+  border-inline-start: 3px solid var(--error);
+  border-radius: 8px;
+  background: var(--error-soft);
+  color: var(--error);
+}
+.cinematic-site .feed-status > p:not([class]):not([role]) {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  color: var(--muted);
+}
+.cinematic-site .collection-count {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+.cinematic-site .footer-nav a,
+.cinematic-site .footer-note {
+  font-size: 0.85rem;
+}
+.cinematic-site .photo-credit {
+  font-size: 0.7rem;
+}
+@media (max-width: 700px) {
+  .cinematic-site .button {
+    min-height: 48px;
+    padding: 0.9rem 1.25rem;
+    font-size: 0.75rem;
+    gap: 0.75rem;
+  }
+  .cinematic-site .guided-primary {
+    min-height: 48px;
+    font-size: 0.78rem;
+  }
+  .cinematic-site .public-intro .container::after {
+    margin-top: 1.75rem;
+  }
+  .cinematic-site .public-intro {
+    padding-bottom: 2rem;
+  }
+  .cinematic-site .gallery-view-bar {
+    gap: 1rem;
+  }
+  .cinematic-site .brand small {
+    font-size: 0.5rem;
+  }
+}
+@media (min-width: 701px) {
+  .cinematic-site .guided-intro {
+    padding-block: clamp(2.5rem, 4vw, 4rem);
+  }
+  .cinematic-site .guided-intro h1 {
+    font-size: clamp(3rem, 4.7vw, 5.2rem);
+    margin-block: 1.25rem;
+  }
+  .cinematic-site .guided-intro ul {
+    margin-block: 1.25rem;
+    gap: 0.4rem;
+  }
+}
+@media (max-width: 900px) {
+  .cinematic-site .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
 }
