@@ -1,9 +1,9 @@
 import Link from 'next/link';
-export function Brand() {
+export function Brand({ showLocation = true }: { showLocation?: boolean }) {
   return (
     <Link href="/" className="brand" aria-label="My Dream Photography home">
       <span>My Dream Photography</span>
-      <small>Balighattam · Andhra Pradesh</small>
+      {showLocation && <small>Narsipatnam · Vizag</small>}
     </Link>
   );
 }

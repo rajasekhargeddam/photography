@@ -25,7 +25,7 @@ export function SiteFooter() {
         </div>
         <div className="footer-top">
           <Brand />
-          <p>Moments Pass. Memories Stay.</p>
+          <p>Your Story, Beautifully Told.</p>
         </div>
         <div className="footer-grid">
           <div>
@@ -79,7 +79,7 @@ export function SiteFooter() {
           <small>
             © {new Date().getFullYear()} {business.name}
           </small>
-          <small>Balighattam · Andhra Pradesh</small>
+          <small>Narsipatnam | Visakhapatnam (Vizag), Andhra Pradesh</small>
           <small>
             <Link href="/admin/requests">Admin portal</Link>
           </small>

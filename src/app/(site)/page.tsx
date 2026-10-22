@@ -21,7 +21,7 @@ import {
 export const metadata: Metadata = {
   title: 'Wedding & Celebration Photography',
   description:
-    'Explore wedding, pre-wedding and celebration photography from My Dream Photography in Balighattam, Andhra Pradesh.',
+    'Wedding photography and cinematic storytelling by Raheem and My Dream Photography. 13 years of capturing celebrations in Narsipatnam and Visakhapatnam (Vizag), Andhra Pradesh.',
   robots: { index: false, follow: false },
 };
 
@@ -121,28 +121,28 @@ export default function HomePage() {
         <Container className="studio-layout">
           <div className="studio-photo depth-frame">
             <Image
-              src="/images/home/stitch-6.jpg"
-              alt="Sample image of a photographer working with a camera"
+              src="/images/founder/raheem-portrait.jpeg"
+              alt="Raheem, founder and lead photographer of My Dream Photography"
               fill
               sizes="(max-width: 700px) 90vw, 35vw"
             />
             <span className="studio-photo-label">
-              Behind the lens <span>My Dream Photography</span>
+              Raheem <span>Founder & Lead Photographer</span>
             </span>
           </div>
           <div>
-            <Eyebrow>Our studio · Balighattam</Eyebrow>
+            <Eyebrow>Meet the founder · Raheem</Eyebrow>
             <SectionHeading id="studio-title">
-              Your people.
-              <br />
-              Your story.
+              Every moment.
+              <br />A story worth keeping.
             </SectionHeading>
             <p>
-              From quiet glances to joyful celebrations. Photography that brings
-              you back to the moment.
+              What started as a passion has become a journey of 13 years and
+              500+ weddings. At My Dream Photography, we preserve real emotions
+              through beautiful wedding photography and cinematic storytelling.
             </p>
             <ButtonLink href="/about" variant="text">
-              Meet the Studio <Icon name="arrow" />
+              Meet Raheem <Icon name="arrow" />
             </ButtonLink>
           </div>
         </Container>

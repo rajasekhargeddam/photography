@@ -1,0 +1,64 @@
+.founder-photo {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--surface);
+}
+.founder-photo img {
+  object-fit: cover;
+}
+.founder-milestones {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+.founder-milestones > div {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+.founder-milestones dt {
+  font-size: 1rem;
+}
+.founder-milestones dd {
+  margin: 0;
+}
+.founder-milestones .milestone-value {
+  order: -1;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+}
+.founder-milestones .milestone-description {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  max-width: 30ch;
+}
+.founder-callout {
+  text-align: center;
+}
+.founder-callout .section-heading {
+  margin-inline: auto;
+}
+.founder-callout .eyebrow {
+  margin-bottom: 1rem;
+}
+.founder-callout p:not(.eyebrow) {
+  color: var(--muted);
+  margin-top: 2rem;
+}
+.founder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+@media (max-width: 700px) {
+  .founder-milestones {
+    grid-template-columns: 1fr;
+  }
+}

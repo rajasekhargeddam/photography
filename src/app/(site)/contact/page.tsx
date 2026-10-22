@@ -19,7 +19,7 @@ export default function Page() {
       <PageIntro
         eyebrow="Contact"
         title="Every story starts with hello."
-        description="Visit our studio in Balighattam."
+        description="Visit our studio in Narsipatnam. Capturing celebrations across Visakhapatnam (Vizag) and beyond."
       />
       <Section className="public-content">
         <Container className="contact-layout">
@@ -37,7 +37,7 @@ export default function Page() {
               <span className="studio-map-preview">
                 <iframe
                   src={business.mapEmbedUrl}
-                  title="Map preview of My Dream Photography, Balighattam"
+                  title="Map preview of My Dream Photography, Narsipatnam"
                   loading="lazy"
                   referrerPolicy="strict-origin-when-cross-origin"
                   tabIndex={-1}
@@ -47,7 +47,7 @@ export default function Page() {
               <span className="studio-map-caption">
                 <span>
                   <strong>Visit our studio</strong>
-                  <small>Balighattam, Andhra Pradesh</small>
+                  <small>Narsipatnam, Andhra Pradesh</small>
                 </span>
                 <span className="studio-map-action">
                   <Icon name="map-pin" /> Get directions{' '}

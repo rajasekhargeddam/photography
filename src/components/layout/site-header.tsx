@@ -44,7 +44,7 @@ export function SiteHeader() {
       </a>
       <header className="site-header">
         <div className="header-inner container">
-          <Brand />
+          <Brand showLocation={false} />
           <nav className="desktop-nav" aria-label="Main navigation">
             {links()}
           </nav>
@@ -97,7 +97,9 @@ export function SiteHeader() {
           <ButtonLink href="/book" onClick={() => dialog.current?.close()}>
             {uiCopy.actions.buildQuote} <Icon name="arrow" />
           </ButtonLink>
-          <p className="mobile-menu-location">Balighattam, Andhra Pradesh</p>
+          <p className="mobile-menu-location">
+            Narsipatnam · Visakhapatnam (Vizag)
+          </p>
         </div>
       </dialog>
     </>
