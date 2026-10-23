@@ -1,4 +1,5 @@
 'use client';
+import { useServicePrices } from '@/features/pricing/provider';
 import { uiCopy } from '@/config/copy';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,6 +22,7 @@ import { QuotePrint, SaveQuotePdf } from './quote-print';
 import { QuantityControl } from './quantity-control';
 
 export function BookingSummary() {
+  const prices = useServicePrices();
   const draft = useAppSelector((s) => s.booking);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -29,8 +31,8 @@ export function BookingSummary() {
   const submitting = useRef(false);
   const saved = draft.saved;
   const dirty = !!saved && saved.requestKey !== enquiryKey(draft);
-  const items = dirty ? quoteItems(draft) : (saved?.items ?? []);
-  const total = dirty ? quoteTotal(draft) : (saved?.total ?? 0);
+  const items = dirty ? quoteItems(draft, prices) : (saved?.items ?? []);
+  const total = dirty ? quoteTotal(draft, prices) : (saved?.total ?? 0);
   function edit(question: string) {
     dispatch(actions.setQuestion(question));
     router.push('/book');

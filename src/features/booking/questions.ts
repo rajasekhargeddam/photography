@@ -1,3 +1,4 @@
+import { serviceImages } from '../../data/service-images';
 import { weddingCeremonies, isCoupleShoot, ceremonyName } from './quote';
 import type { BookingDraft } from './model';
 type Question = {
@@ -110,36 +111,36 @@ export const eventCards = [
     event: 'Marriage',
     label: 'Wedding',
     description: 'Your ceremony and the celebrations around it.',
-    image: 1,
+    image: null,
   },
   {
     event: 'Pre-Wedding',
     label: 'Pre-Wedding / Post-Wedding',
     description: 'A shoot for the two of you.',
-    image: 2,
+    image: serviceImages.preWedding,
   },
   {
     event: 'Engagement',
     label: 'Engagement',
     description: 'Celebrate the start of your next chapter.',
-    image: 3,
+    image: null,
   },
   {
     event: 'Birthday',
     label: 'Birthday / Pre-Birthday',
     description: 'Milestones, family and celebrations.',
-    image: 4,
+    image: serviceImages.kids,
   },
   {
     event: 'Maternity',
     label: 'Maternity',
     description: 'Portraits of a growing family.',
-    image: 5,
+    image: null,
   },
   {
     event: 'Other',
     label: 'Other Events',
     description: 'Baby shoots, corporate events and more.',
-    image: 7,
+    image: serviceImages.halfSaree,
   },
 ] as const;

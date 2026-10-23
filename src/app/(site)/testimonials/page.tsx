@@ -1,12 +1,9 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/config/seo';
 import { Container, Section } from '@/components/ui/layout';
 import { PageIntro, EventCallout } from '@/components/ui/public-page';
 import { PublicTestimonials } from '@/features/content/public-content';
 
-export const metadata: Metadata = {
-  title: 'Testimonials',
-  robots: { index: false, follow: true },
-};
+export const metadata = pageMetadata('/testimonials');
 export default function TestimonialsPage() {
   return (
     <>

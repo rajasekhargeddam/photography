@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/config/seo';
 import Image from 'next/image';
 import {
   Container,
@@ -10,12 +10,7 @@ import { PageIntro } from '@/components/ui/public-page';
 import { ButtonLink } from '@/components/ui/button';
 import '@/styles/about.css';
 
-export const metadata: Metadata = {
-  title: 'Meet Raheem | Our Story',
-  description:
-    'Meet Raheem, founder and lead photographer of My Dream Photography. 13 years of wedding photography and cinematic storytelling in Narsipatnam and Visakhapatnam (Vizag), Andhra Pradesh.',
-  robots: { index: false, follow: true },
-};
+export const metadata = pageMetadata('/about');
 
 const milestones = [
   {

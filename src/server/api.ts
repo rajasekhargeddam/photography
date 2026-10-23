@@ -13,6 +13,7 @@ import type { ContentService } from './content';
 import type { ContentKind } from '../features/content/model';
 import type { CallbackService } from './callbacks';
 import { callbackInput } from '../features/contact/model';
+import type { PricingService } from './pricing';
 
 type Services = {
   auth: AuthService;
@@ -21,6 +22,7 @@ type Services = {
   service: EnquiryService;
   content?: ContentService;
   callbacks?: CallbackService;
+  pricing?: Pick<PricingService, 'get' | 'update'>;
 };
 function sessionToken(request: Request) {
   return request.headers
@@ -49,6 +51,8 @@ export function createApi(getServices: () => Promise<Services>) {
         return json({ status: 'ok' });
       }
       const known =
+        path === '/api/pricing' ||
+        path === '/api/admin/pricing' ||
         !!contentPath ||
         path === '/api/callbacks' ||
         path === '/api/admin/callbacks' ||
@@ -109,6 +113,18 @@ export function createApi(getServices: () => Promise<Services>) {
         const { auth, repository, authRepository } = await getServices();
         const admin = await auth.current(token);
         if (!admin) throw new ApiFailure(401, 'Admin sign-in required.');
+        if (path === '/api/admin/pricing') {
+          if (!(await authRepository.consume(`pricing:${admin.id}`, 60, 60)))
+            throw new ApiFailure(429, 'Please wait before trying again.');
+          const { pricing } = await getServices();
+          if (!pricing) throw new ApiFailure(503, 'Pricing unavailable.');
+          if (method === 'GET') return json(await pricing.get());
+          if (method === 'PUT')
+            return json(
+              await pricing.update(await readJson(request), admin.id),
+            );
+          throw new ApiFailure(405, 'Method not allowed.');
+        }
         if (contentPath) {
           if (!(await authRepository.consume(`content:${admin.id}`, 60, 60)))
             throw new ApiFailure(
@@ -167,6 +183,12 @@ export function createApi(getServices: () => Promise<Services>) {
         const record = await repository.find(id);
         if (!record) throw new ApiFailure(404, 'Enquiry not found.');
         return json(publicEnquiry(record));
+      }
+      if (path === '/api/pricing') {
+        if (method !== 'GET') throw new ApiFailure(405, 'Method not allowed.');
+        const { pricing } = await getServices();
+        if (!pricing) throw new ApiFailure(503, 'Pricing unavailable.');
+        return json(await pricing.get());
       }
       if (contentPath) {
         const { content } = await getServices();

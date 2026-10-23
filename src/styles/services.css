@@ -1,0 +1,167 @@
+.services-editorial .container {
+  max-width: 1280px;
+  padding-inline: clamp(1.5rem, 7vw, 7rem);
+}
+.services-intro {
+  padding-bottom: clamp(3rem, 6vw, 6rem);
+}
+.services-intro h1 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.6rem, 5.6vw, 5.8rem);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  margin-top: 1.5rem;
+}
+.services-intro h1 em,
+.services-invitation em {
+  color: var(--accent);
+  font-weight: 400;
+}
+.services-intro-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.services-intro-bottom p {
+  max-width: 56ch;
+  color: var(--muted);
+}
+.services-intro-note {
+  color: var(--accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+.services-collection {
+  padding-block: 0 clamp(4rem, 8vw, 9rem);
+}
+.services-sequence {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3.5rem, 6vw, 6rem);
+}
+.services-entry {
+  display: flex;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+  min-width: 0;
+  scroll-margin-top: 2rem;
+}
+.services-photo-space {
+  position: relative;
+  flex: 0 0 44%;
+  max-width: 500px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: 6px;
+}
+.services-photo-space img {
+  object-fit: cover;
+}
+.services-photo-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  text-align: center;
+  background:
+    radial-gradient(
+      ellipse at 75% 25%,
+      color-mix(in srgb, var(--accent) 20%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(135deg, var(--surface), var(--background));
+}
+.services-frame-corner {
+  position: absolute;
+  inset: 1.25rem;
+  border-block: 1px solid var(--border);
+  pointer-events: none;
+}
+.services-photo-title {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: clamp(1.5rem, 2.8vw, 2.5rem);
+  margin-top: 0.8rem;
+}
+.services-photo-caption {
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-top: 1rem;
+}
+.services-entry-copy {
+  flex: 1;
+  min-width: 0;
+}
+.services-entry:nth-child(even) {
+  flex-direction: row-reverse;
+}
+.services-entry h2 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 3.5vw, 3.5rem);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+.services-tagline {
+  margin-top: 1.2rem;
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+}
+.services-description {
+  margin-top: 1rem;
+  color: var(--muted);
+  max-width: 48ch;
+  line-height: 1.8;
+}
+.services-entry-copy .button {
+  margin-top: 1.5rem;
+}
+.services-invitation {
+  text-align: center;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.services-invitation .section-heading {
+  margin: 1.5rem auto;
+}
+.services-invitation p:not(.eyebrow) {
+  color: var(--muted);
+}
+.services-invitation-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+@media (max-width: 700px) {
+  .services-intro-bottom {
+    flex-direction: column;
+    align-items: start;
+    gap: 1rem;
+  }
+  .services-entry,
+  .services-entry:nth-child(even) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+  }
+  .services-photo-space {
+    flex: none;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .services-entry-copy {
+    width: 100%;
+  }
+  .services-photo-caption {
+    max-width: 24ch;
+  }
+}

@@ -1,6 +1,6 @@
 import { uiCopy } from '@/config/copy';
 import { HeroImages } from '@/features/content/hero-images';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/config/seo';
 import Image from 'next/image';
 import { ButtonLink } from '@/components/ui/button';
 import {
@@ -18,12 +18,7 @@ import {
   PublicVideos,
 } from '@/features/content/public-content';
 
-export const metadata: Metadata = {
-  title: 'Wedding & Celebration Photography',
-  description:
-    'Wedding photography and cinematic storytelling by Raheem and My Dream Photography. 13 years of capturing celebrations in Narsipatnam and Visakhapatnam (Vizag), Andhra Pradesh.',
-  robots: { index: false, follow: false },
-};
+export const metadata = pageMetadata('/');
 
 export default function HomePage() {
   return (
@@ -37,13 +32,16 @@ export default function HomePage() {
             <br />
             <em>Memories Stay.</em>
           </h1>
-          <p>Weddings, pre-weddings and the moments in between.</p>
+          <p>
+            Wedding photography and cinematic films in Narsipatnam and
+            Visakhapatnam (Vizag).
+          </p>
           <div className="home-actions">
-            <ButtonLink href="/contact">
-              {uiCopy.actions.contactStudio} <Icon name="arrow" />
+            <ButtonLink href="/book">
+              {uiCopy.actions.buildQuote} <Icon name="arrow" />
             </ButtonLink>
-            <ButtonLink href="/book" variant="outline">
-              {uiCopy.actions.buildQuote}
+            <ButtonLink href="/contact" variant="outline">
+              {uiCopy.actions.contactStudio}
             </ButtonLink>
           </div>
         </Container>

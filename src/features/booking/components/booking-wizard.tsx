@@ -1,6 +1,8 @@
 'use client';
+import { serviceImages } from '@/data/service-images';
+
+import { useServicePrices } from '@/features/pricing/provider';
 import { uiCopy } from '@/config/copy';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UnknownAction } from '@reduxjs/toolkit';
@@ -10,7 +12,6 @@ import { questionsFor, eventCards } from '../questions';
 import {
   albumPrice,
   coverageFor,
-  ceremonyExtrasFor,
   isCoupleShoot,
   money,
   quoteTotal,
@@ -18,9 +19,10 @@ import {
 } from '../quote';
 import { newEnquirySession, saveEnquiry } from '../api';
 import { getApiError } from '@/lib/api/client';
-import { QuoteCard, ServiceDrawing } from './quote-card';
+import { QuoteCard } from './quote-card';
 
 export function BookingWizard() {
+  const prices = useServicePrices();
   const draft = useAppSelector((s) => s.booking);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -122,7 +124,7 @@ export function BookingWizard() {
       {!intro && (
         <div className="guided-total">
           <span>Your sample quote</span>
-          <strong aria-live="polite">{money(quoteTotal(draft))}</strong>
+          <strong aria-live="polite">{money(quoteTotal(draft, prices))}</strong>
           <progress
             value={index + 1}
             max={draft.eventType ? questions.length : 6}
@@ -131,7 +133,7 @@ export function BookingWizard() {
         </div>
       )}
       {intro ? (
-        <section className="guided-intro">
+        <section className="guided-intro guided-intro-text">
           <div className="guided-intro-copy">
             <p className="guided-eyebrow">A quote built around you</p>
             <h1>
@@ -155,32 +157,6 @@ export function BookingWizard() {
               Development sample prices. Final services, availability and
               charges need studio confirmation.
             </p>
-          </div>
-          <div className="guided-intro-visual" aria-hidden="true">
-            <div className="quote-portrait depth-frame">
-              <Image
-                src="/images/home/stitch-0.jpg"
-                alt=""
-                fill
-                sizes="(max-width: 900px) 75vw, 35vw"
-              />
-              <span>
-                Every detail.
-                <br />
-                <em>Entirely yours.</em>
-              </span>
-            </div>
-            <div className="quote-inset">
-              <Image
-                src="/images/home/stitch-2.jpg"
-                alt=""
-                fill
-                sizes="(max-width: 900px) 35vw, 15vw"
-              />
-            </div>
-            <span className="quote-visual-caption">
-              A celebration, imagined together.
-            </span>
           </div>
         </section>
       ) : (
@@ -225,7 +201,9 @@ export function BookingWizard() {
                   <QuoteCard
                     key={event}
                     title={event}
-                    image={2}
+                    image={
+                      event === 'Pre-Wedding' ? serviceImages.preWedding : null
+                    }
                     description={
                       event === 'Pre-Wedding'
                         ? 'Before your wedding day.'
@@ -242,7 +220,9 @@ export function BookingWizard() {
                   <QuoteCard
                     key={event}
                     title={event === 'Other' ? 'Other event' : event}
-                    icon={event === 'Baby Shoot' ? '♡' : '✦'}
+                    image={
+                      event === 'Baby Shoot' ? serviceImages.newborn : null
+                    }
                     onClick={() => advance(actions.chooseEvent(event))}
                   />
                 ))}
@@ -285,7 +265,7 @@ export function BookingWizard() {
             {q.kind === 'coverage' && c && (
               <>
                 <div className="guided-cards">
-                  {coverageFor(draft.eventType, c.id).map((service) => (
+                  {coverageFor(draft.eventType, c.id, prices).map((service) => (
                     <QuoteCard
                       key={service.id}
                       title={service.name}
@@ -295,7 +275,7 @@ export function BookingWizard() {
                           : 'Sample rate per ceremony'
                       }
                       price={`+ ${money(service.price)}`}
-                      icon={<ServiceDrawing service={service.id} />}
+                      service={service.id}
                       selected={c.serviceIds.includes(service.id)}
                       onClick={() =>
                         dispatch(
@@ -308,31 +288,6 @@ export function BookingWizard() {
                     />
                   ))}
                 </div>
-                {ceremonyExtrasFor(draft.eventType, c.id).length > 0 && (
-                  <details className="guided-additional">
-                    <summary>More studio options</summary>
-                    <div className="guided-cards">
-                      {ceremonyExtrasFor(draft.eventType, c.id).map(
-                        (service) => (
-                          <QuoteCard
-                            key={service.id}
-                            title={service.name}
-                            price={`+ ${money(service.price)}`}
-                            selected={c.serviceIds.includes(service.id)}
-                            onClick={() =>
-                              dispatch(
-                                actions.toggleService({
-                                  ceremonyId: c.id,
-                                  serviceId: service.id,
-                                }),
-                              )
-                            }
-                          />
-                        ),
-                      )}
-                    </div>
-                  </details>
-                )}
               </>
             )}
             {q.kind === 'album' && (
@@ -372,7 +327,7 @@ export function BookingWizard() {
                     key={size}
                     title={size.replace('x', ' × ')}
                     description="Sample size · pages and finish to be agreed"
-                    price={`+ ${money(albumPrice(size))} per album`}
+                    price={`+ ${money(albumPrice(size, prices))} per album`}
                     icon="▤"
                     onClick={() =>
                       advance(actions.setAlbumPreferences({ albumSize: size }))
@@ -418,9 +373,6 @@ export function BookingWizard() {
                 {uiCopy.actions.reviewQuote}
               </button>
             )}
-            <p className="guided-note">
-              Sample rates only. Travel, tax and delivery are not calculated.
-            </p>
           </section>
           {contact && (
             <dialog

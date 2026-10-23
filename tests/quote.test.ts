@@ -13,7 +13,6 @@ import {
 } from '../src/features/booking/model';
 import {
   coverageFor,
-  ceremonyExtrasFor,
   newCeremony,
   quoteTotal,
   quoteItems,
@@ -39,7 +38,7 @@ const wedding: QuoteDraft = {
     {
       ...newCeremony('wedding'),
       dateUndecided: true,
-      serviceIds: ['candid', 'streaming'],
+      serviceIds: ['candid', 'audience-video'],
     },
     {
       ...newCeremony('pre-wedding'),
@@ -71,19 +70,22 @@ test('all event branches validate and simple shoots skip ceremony selection', ()
       ],
     };
     assert.deepEqual(validateQuote(draft), {});
-    assert.equal(snapshot(draft).total, 35000);
+    assert.equal(
+      snapshot(draft).total,
+      coverageFor(event, id)[0].price + 20000,
+    );
   }
 });
 test('server totals use per-ceremony, per-day and album quantities with saved groups', () => {
   const result = snapshot(wedding);
-  assert.equal(result.total, 108000); // 15k + 7k + (25k + 8k)*2 + 10k*2
-  assert.equal(quoteTotal(wedding), 108000);
+  assert.equal(result.total, 113000); // 15k + 12k + (25k + 8k)*2 + 10k*2
+  assert.equal(quoteTotal(wedding), 113000);
   assert.equal(
     result.items.find((i) => i.id === 'pre-wedding:cinematic')?.quantity,
     2,
   );
   assert.equal(
-    result.items.find((i) => i.id === 'wedding:streaming')?.groupName,
+    result.items.find((i) => i.id === 'wedding:audience-video')?.groupName,
     'Wedding ceremony',
   );
   assert.equal(result.pricingStatus, 'DEVELOPMENT_SAMPLE');
@@ -98,7 +100,6 @@ test('removing ceremonies clears dependent charges and changing events resets se
   assert.equal(quoteTotal(state), 0);
   assert.equal(state.name, wedding.name);
   assert.deepEqual(state.ceremonies, [newCeremony('shoot')]);
-  assert.deepEqual(ceremonyExtrasFor('Baby Shoot', 'shoot'), []);
   state = reduce(
     state,
     a.toggleService({ ceremonyId: 'shoot', serviceId: 'led-wall' }),

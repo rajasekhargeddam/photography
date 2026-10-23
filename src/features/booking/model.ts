@@ -2,7 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
   ceremoniesForEvent,
   coverageFor,
-  ceremonyExtrasFor,
   newCeremony,
   type Ceremony,
   type QuoteDraft,
@@ -155,12 +154,7 @@ const slice = createSlice({
       const { ceremonyId, serviceId } = action.payload;
       const c = state.ceremonies.find((c) => c.id === ceremonyId);
       if (!c) return;
-      if (
-        ![
-          ...coverageFor(state.eventType, c.id),
-          ...ceremonyExtrasFor(state.eventType, c.id),
-        ].some((s) => s.id === serviceId)
-      )
+      if (!coverageFor(state.eventType, c.id).some((s) => s.id === serviceId))
         return;
       c.serviceIds = c.serviceIds.includes(serviceId)
         ? c.serviceIds.filter((id) => id !== serviceId)

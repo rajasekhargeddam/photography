@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type { Pricing, ServicePrices } from '../features/pricing/model';
 import {
   quoteInputSchema,
   quoteItems,
@@ -17,7 +18,11 @@ export class ApiFailure extends Error {
     super(message);
   }
 }
-export function snapshot(input: unknown) {
+export function snapshot(
+  input: unknown,
+  prices: ServicePrices = {},
+  catalogueVersion = quoteCatalogueVersion,
+) {
   const parsed = quoteInputSchema.safeParse(input);
   if (!parsed.success)
     throw new ApiFailure(
@@ -35,13 +40,13 @@ export function snapshot(input: unknown) {
       serviceIds: [...c.serviceIds].sort(),
       quantities: canonicalQuantities(c.quantities),
     }));
-  const items = quoteItems({ ...data, ceremonies });
+  const items = quoteItems({ ...data, ceremonies }, prices);
   return {
     ...data,
     ceremonies,
     bookingType: 'CUSTOM' as const,
     packageId: '',
-    catalogueVersion: quoteCatalogueVersion,
+    catalogueVersion,
     pricingStatus: 'DEVELOPMENT_SAMPLE',
     serviceIds: [...new Set(ceremonies.flatMap((c) => c.serviceIds))].sort(),
     eventDate:
@@ -115,7 +120,10 @@ export function publicEnquiry(value: Enquiry) {
   return { id: _id, ...rest };
 }
 export class EnquiryService {
-  constructor(private repository: EnquiryRepository) {}
+  constructor(
+    private repository: EnquiryRepository,
+    private loadPricing?: () => Promise<Pricing>,
+  ) {}
   async owned(id: string, token: string) {
     const record = await this.repository.find(id);
     if (!record || record.tokenHash !== hash(token))
@@ -123,7 +131,30 @@ export class EnquiryService {
     return record;
   }
   async save(id: string, token: string, input: unknown) {
-    const details = snapshot(input);
+    // Retried saves keep the price snapshot the customer already reviewed.
+    const previous = await this.repository.find(id);
+    if (previous) {
+      await this.owned(id, token);
+      if (previous.details.quoteVersion === 2) {
+        const recordedPrices = Object.fromEntries(
+          previous.details.items.map((item) => [
+            item.serviceId === 'album' && previous.details.albumSize === '14x40'
+              ? 'album-large'
+              : (item.serviceId ?? item.id),
+            item.price,
+          ]),
+        );
+        const retry = snapshot(
+          input,
+          recordedPrices,
+          previous.details.catalogueVersion,
+        );
+        if (JSON.stringify(retry) === JSON.stringify(previous.details))
+          return previous;
+      }
+    }
+    const pricing = await this.loadPricing?.();
+    const details = snapshot(input, pricing?.prices, pricing?.revision);
     const now = new Date();
     const record: Enquiry = {
       _id: id,

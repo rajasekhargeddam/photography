@@ -81,7 +81,9 @@ export function SiteFooter() {
           </small>
           <small>Narsipatnam | Visakhapatnam (Vizag), Andhra Pradesh</small>
           <small>
-            <Link href="/admin/requests">Admin portal</Link>
+            <Link href="/admin/requests" prefetch={false}>
+              Admin portal
+            </Link>
           </small>
         </div>
       </div>

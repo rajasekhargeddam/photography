@@ -1,9 +1,10 @@
 import { z } from 'zod';
-import { bookableServices } from '../../data/catalog';
+import { albumOptions, bookableServices } from '../../data/catalog';
 import { eventTypes } from './events';
 import { contactSchema } from './contact-validation';
+import type { ServicePrices } from '../pricing/model';
 
-export const quoteCatalogueVersion = 'guided-sample-v3';
+export const quoteCatalogueVersion = 'guided-sample-v4';
 // Provisional choices for development, not confirmed studio availability/inclusions.
 export const weddingCeremonies = [
   { id: 'wedding', name: 'Wedding ceremony' },
@@ -38,7 +39,11 @@ export const isCoupleShoot = (event: string, id: string) =>
   ['Pre-Wedding', 'Post-Wedding'].includes(event) ||
   id === 'pre-wedding' ||
   id === 'post-wedding';
-export function coverageFor(event: string, id: string) {
+export function coverageFor(
+  event: string,
+  id: string,
+  prices: ServicePrices = {},
+) {
   const base = [
     'traditional-photo',
     'traditional-video',
@@ -62,26 +67,16 @@ export function coverageFor(event: string, id: string) {
           ? [...base, 'drone']
           : event === 'Baby Shoot'
             ? ['candid', 'traditional-photo', 'cinematic']
-            : [
-                ...base,
-                'drone',
-                'audience-video',
-                ...(event === 'Maternity' ? ['outdoor'] : []),
-              ];
+            : [...base, 'drone', 'audience-video'];
   if (!ceremoniesForEvent(event).some((c) => c.id === id)) return [];
-  return bookableServices.filter((s) => available.includes(s.id));
+  return bookableServices
+    .filter((s) => available.includes(s.id))
+    .map((s) => ({ ...s, price: prices[s.id] ?? s.price }));
 }
-export function ceremonyExtrasFor(event: string, id: string) {
-  return !isCoupleShoot(event, id) &&
-    ['Marriage', 'Engagement', 'Birthday', 'Corporate'].includes(event)
-    ? bookableServices.filter((s) =>
-        ['streaming', 'led-wall', 'crane'].includes(s.id),
-      )
-    : [];
-}
-const albumService = bookableServices.find((s) => s.id === 'album')!;
-export const albumPrice = (size: QuoteDraft['albumSize']) =>
-  size === '14x40' ? 14000 : albumService.price;
+export const albumPrice = (
+  size: QuoteDraft['albumSize'],
+  prices: ServicePrices = {},
+) => prices[albumOptions[size].id] ?? albumOptions[size].price;
 export const ceremonySchema = z
   .object({
     id: z.string().max(40),
@@ -196,10 +191,7 @@ export function validateQuote(draft: QuoteDraft, today = indiaToday()) {
     )
       errors[c.id + '-coverage'] =
         label + ': select at least one coverage service.';
-    const eligible = [
-      ...coverageFor(draft.eventType, c.id),
-      ...ceremonyExtrasFor(draft.eventType, c.id),
-    ];
+    const eligible = coverageFor(draft.eventType, c.id);
     if (
       Object.entries(c.quantities).some(
         ([id, q]) =>
@@ -229,12 +221,12 @@ export function validateQuote(draft: QuoteDraft, today = indiaToday()) {
     errors.notes = 'Use 1,000 characters or fewer for notes.';
   return errors;
 }
-export function quoteItems(draft: QuoteDraft): QuoteItem[] {
+export function quoteItems(
+  draft: QuoteDraft,
+  prices: ServicePrices = {},
+): QuoteItem[] {
   const items: QuoteItem[] = draft.ceremonies.flatMap((c) =>
-    [
-      ...coverageFor(draft.eventType, c.id),
-      ...ceremonyExtrasFor(draft.eventType, c.id),
-    ]
+    coverageFor(draft.eventType, c.id)
       .filter((s) => c.serviceIds.includes(s.id))
       .map((s) => ({
         id: `${c.id}:${s.id}`,
@@ -242,7 +234,7 @@ export function quoteItems(draft: QuoteDraft): QuoteItem[] {
         name: s.name,
         groupId: c.id,
         groupName: ceremonyName(draft.eventType, c.id),
-        price: s.price,
+        price: prices[s.id] ?? s.price,
         quantity:
           (isCoupleShoot(draft.eventType, c.id) ? c.days : 1) *
           (c.quantities[s.id] ?? 1),
@@ -253,17 +245,17 @@ export function quoteItems(draft: QuoteDraft): QuoteItem[] {
     items.push({
       id: 'extras:album',
       serviceId: 'album',
-      name: `${albumService.name} · ${draft.albumSize}`,
+      name: `${albumOptions[draft.albumSize].name} · ${draft.albumSize}`,
       groupId: 'extras',
       groupName: 'Albums',
-      price: albumPrice(draft.albumSize),
+      price: albumPrice(draft.albumSize, prices),
       quantity: draft.albumQuantity,
       unit: 'per album',
     });
   return items;
 }
-export const quoteTotal = (draft: QuoteDraft) =>
-  quoteItems(draft).reduce((sum, i) => sum + i.price * i.quantity, 0);
+export const quoteTotal = (draft: QuoteDraft, prices: ServicePrices = {}) =>
+  quoteItems(draft, prices).reduce((sum, i) => sum + i.price * i.quantity, 0);
 export const money = (value: number) =>
   new Intl.NumberFormat('en-IN', {
     style: 'currency',

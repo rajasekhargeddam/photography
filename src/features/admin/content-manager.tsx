@@ -1,11 +1,11 @@
 'use client';
 import Image from 'next/image';
-import { AdminPhotoPreview } from './photo-preview';
+import dynamic from 'next/dynamic';
 import {
   isCloudinaryPhoto,
   photographyImageLoader,
 } from '@/lib/image-delivery';
-import { PhotoBatchUpload } from './photo-batch-upload';
+
 import { YouTubeThumbnail } from '@/components/ui/youtube-thumbnail';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
@@ -14,6 +14,16 @@ import {
   type ContentKind,
   type ContentRecord,
 } from '../content/model';
+
+const AdminPhotoPreview = dynamic(
+  () => import('./photo-preview').then((module) => module.AdminPhotoPreview),
+  { loading: () => <p role="status">Loading photo preview…</p> },
+);
+const PhotoBatchUpload = dynamic(
+  () =>
+    import('./photo-batch-upload').then((module) => module.PhotoBatchUpload),
+  { loading: () => <p role="status">Loading upload tools…</p> },
+);
 
 type CategoryCount = {
   category: string;

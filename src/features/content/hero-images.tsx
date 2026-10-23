@@ -45,6 +45,8 @@ export function HeroImages() {
           alt=""
           fill
           sizes="100vw"
+          loading={position === 0 ? 'eager' : 'lazy'}
+          fetchPriority={position === 0 ? 'high' : 'auto'}
           unoptimized={!isCloudinaryPhoto(photo.url!)}
           className={`hero-photo hero-slide${position === index % count ? ' is-active' : ''}`}
           onError={() => setFailed((old) => [...old, photo._id])}

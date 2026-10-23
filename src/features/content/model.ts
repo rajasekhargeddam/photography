@@ -4,7 +4,6 @@ export const categories = [
   'Wedding',
   'Pre-Wedding',
   'Engagement',
-  'Makeover',
   'Half Sari',
   'Haldi',
   'Birthday',

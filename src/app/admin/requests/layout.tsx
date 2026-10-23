@@ -27,6 +27,7 @@ export default async function RequestsLayout({
       </header>
       <nav className="admin-navigation" aria-label="Admin navigation">
         <Link href="/admin/requests">Requests</Link>
+        <Link href="/admin/pricing">Service Prices</Link>
         <Link href="/admin/content/hero">Home hero</Link>
         <Link href="/admin/content/gallery">Portfolio</Link>
         <Link href="/admin/content/testimonials">Testimonials</Link>

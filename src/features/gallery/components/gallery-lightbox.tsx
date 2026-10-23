@@ -32,16 +32,16 @@ function Photo({
         alt={photo.alt ?? ''}
         width={photo.width ?? 512}
         height={photo.height ?? 286}
-        loader={cloudinary ? photographyImageLoader : undefined}
-        unoptimized={!cloudinary}
-        sizes={large ? '(min-width: 1800px) 1600px, 94vw' : sizes}
+        loader={!large && cloudinary ? photographyImageLoader : undefined}
+        unoptimized={large || !cloudinary}
+        sizes={large ? undefined : sizes}
         loading={large ? 'eager' : 'lazy'}
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
       />
       {large && !loaded && (
         <span className="photo-loading" role="status">
-          Loading photo…
+          Loading original photo…
         </span>
       )}
     </span>

@@ -8,6 +8,7 @@ import { ContentService } from './content';
 import type { ContentRecord } from '../features/content/model';
 import { CallbackService } from './callbacks';
 import type { CallbackRequest } from '../features/contact/model';
+import { PricingService, type PricingRecord } from './pricing';
 
 // Keep the database connection across hot reloads, not application service instances.
 const connections = globalThis as typeof globalThis & {
@@ -39,6 +40,7 @@ async function connect() {
   const db = client.db(process.env.MONGODB_DATABASE ?? 'photography');
   const repository = new MongoEnquiries(db.collection<Enquiry>('enquiries'));
   const authRepository = new MongoAuth(db);
+  const pricing = new PricingService(db.collection<PricingRecord>('pricing'));
   const content = new ContentService(db.collection<ContentRecord>('content'));
   const callbacks = new CallbackService(
     db.collection<CallbackRequest>('callbacks'),
@@ -51,7 +53,8 @@ async function connect() {
   ]);
   return {
     repository,
-    service: new EnquiryService(repository),
+    service: new EnquiryService(repository, () => pricing.get()),
+    pricing,
     auth: new AuthService(authRepository),
     authRepository,
     content,

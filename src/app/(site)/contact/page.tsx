@@ -1,5 +1,5 @@
 import { Icon } from '@/components/ui/icon';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/config/seo';
 import {
   Container,
   Section,
@@ -9,10 +9,7 @@ import {
 import { PageIntro } from '@/components/ui/public-page';
 import { CallbackForm } from '@/features/contact/callback-form';
 import { business } from '@/config/business';
-export const metadata: Metadata = {
-  title: 'Contact',
-  robots: { index: false, follow: true },
-};
+export const metadata = pageMetadata('/contact');
 export default function Page() {
   return (
     <>

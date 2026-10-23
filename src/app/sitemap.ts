@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/config/site';
+import { publicPages } from '@/config/seo';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Add routes when their real content is ready; placeholders are excluded.
-  return [{ url: site.url }];
+  return Object.keys(publicPages).map((path) => ({
+    url: new URL(path, site.url).href,
+  }));
 }

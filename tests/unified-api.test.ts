@@ -1,9 +1,11 @@
+import type { PricingService } from '../src/server/pricing';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import {
   AuthService,
   SESSION_SECONDS,
+  SESSION_COOKIE,
   seedAdmin,
   type Admin,
   type AdminSession,
@@ -87,10 +89,11 @@ const input = {
   notes: '',
 };
 const password = 'Synthetic-only-password-27!';
-function fixture() {
+function fixture(pricing?: Pick<PricingService, 'get' | 'update'>) {
   const authRepository = new MemoryAuth();
   const repository = new MemoryEnquiries();
   const services = {
+    pricing,
     authRepository,
     repository,
     auth: new AuthService(authRepository),
@@ -255,7 +258,7 @@ test('migration preserves ownership, pricing, retry, edits, revision checks and 
   const first = await (await put(input)).json();
   assert.equal(first.details.total, 15000);
   assert.equal(first.details.pricingStatus, 'DEVELOPMENT_SAMPLE');
-  assert.equal(first.details.catalogueVersion, 'guided-sample-v3');
+  assert.equal(first.details.catalogueVersion, 'guided-sample-v4');
   assert.equal(first.details.items[0].unit, 'per ceremony');
   assert.equal(first.tokenHash, undefined);
   assert.equal((await (await put(input)).json()).revision, first.revision);
@@ -291,4 +294,46 @@ test('migration preserves ownership, pricing, retry, edits, revision checks and 
   assert.equal(details.status, 'CONFIRMED');
   assert.equal(details.details.total, 18000);
   assert.equal(details.tokenHash, undefined);
+});
+
+test('pricing writes require a valid admin session and same-origin request', async () => {
+  let updates = 0;
+  const pricing = {
+    get: async () => ({ prices: { candid: 20000 }, revision: 'test' }),
+    update: async () => {
+      updates++;
+      return { prices: { candid: 22000 }, revision: 'updated' };
+    },
+  };
+  const { call, auth, authRepository } = fixture(pricing);
+  assert.equal((await call('pricing')).status, 200);
+  assert.equal((await call('pricing', 'PUT', {})).status, 405);
+  assert.equal((await call('admin/pricing', 'PUT', {})).status, 401);
+  assert.equal(
+    (
+      await call('admin/pricing', 'GET', undefined, {
+        Cookie: 'studio_admin_session=' + 'a'.repeat(64),
+      })
+    ).status,
+    401,
+  );
+  await seedAdmin(authRepository, 'prices@example.test', password);
+  const token = await auth.login({ email: 'prices@example.test', password });
+  const headers = { Cookie: SESSION_COOKIE + '=' + token };
+  assert.equal(
+    (
+      await call(
+        'admin/pricing',
+        'PUT',
+        {},
+        { ...headers, Origin: 'https://other.test' },
+      )
+    ).status,
+    403,
+  );
+  assert.equal(updates, 0);
+  assert.equal((await call('admin/pricing', 'PUT', {}, headers)).status, 200);
+  assert.equal(updates, 1);
+  await auth.logout(token);
+  assert.equal((await call('admin/pricing', 'PUT', {}, headers)).status, 401);
 });
