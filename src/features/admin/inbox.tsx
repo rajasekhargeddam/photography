@@ -49,12 +49,27 @@ function ErrorNotice({
   );
 }
 function EnquiryList() {
-  const [filter, setFilter] = useState<Enquiry['status'] | 'ALL'>('CONFIRMED');
+  const [filter, setFilter] = useState<Enquiry['status'] | 'ALL' | 'UNREAD'>(
+    'CONFIRMED',
+  );
+  const [search, setSearch] = useState('');
+  const [term, setTerm] = useState('');
+  const [opened, setOpened] = useState<string | null>(null);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTerm(search.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
   const query = useInfiniteQuery({
-    queryKey: ['enquiries', filter],
+    queryKey: ['enquiries', filter, term],
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>
-      fetchEnquiries(pageParam, signal, filter === 'ALL' ? undefined : filter),
+      fetchEnquiries(
+        pageParam,
+        signal,
+        filter === 'ALL' || filter === 'UNREAD' ? undefined : filter,
+        term,
+        filter === 'UNREAD',
+      ),
     getNextPageParam: (lastPage, _pages, offset) =>
       lastPage.length === 30 ? offset + 30 : undefined,
   });
@@ -80,6 +95,16 @@ function EnquiryList() {
           {query.isFetching ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
+      <label className="inbox-search">
+        <span>Find a quote</span>
+        <input
+          type="search"
+          placeholder="Search customer name or phone number"
+          value={search}
+          maxLength={100}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </label>
       <div
         className="request-switch"
         role="group"
@@ -88,6 +113,7 @@ function EnquiryList() {
         {(
           [
             ['CONFIRMED', 'Sent to studio'],
+            ['UNREAD', 'Unread'],
             ['ATTEMPTED', 'Saved quotes'],
             ['ALL', 'All quotes'],
           ] as const
@@ -127,18 +153,22 @@ function EnquiryList() {
             ↗
           </span>
           <h2>
-            {filter === 'CONFIRMED'
-              ? 'No quotes sent to the studio yet'
-              : filter === 'ATTEMPTED'
-                ? 'No saved quotes awaiting submission'
-                : 'No quote requests yet'}
+            {term || filter === 'UNREAD'
+              ? 'No matching quotes'
+              : filter === 'CONFIRMED'
+                ? 'No quotes sent to the studio yet'
+                : filter === 'ATTEMPTED'
+                  ? 'No saved quotes awaiting submission'
+                  : 'No quote requests yet'}
           </h2>
           <p>
-            {filter === 'CONFIRMED'
-              ? 'Quotes appear here when a client sends them to the studio.'
-              : filter === 'ATTEMPTED'
-                ? 'Quotes saved without sending appear here.'
-                : 'Requests appear here after visitors complete their details.'}
+            {term || filter === 'UNREAD'
+              ? 'Try another search or filter.'
+              : filter === 'CONFIRMED'
+                ? 'Quotes appear here when a client sends them to the studio.'
+                : filter === 'ATTEMPTED'
+                  ? 'Quotes saved without sending appear here.'
+                  : 'Requests appear here after visitors complete their details.'}
           </p>
           <a href="/book" target="_blank" rel="noreferrer">
             Open booking page ↗
@@ -158,13 +188,31 @@ function EnquiryList() {
           <ul className="enquiries">
             {group.enquiries.map((item) => (
               <li key={item.id}>
-                <a className="enquiry-row" href={`/admin/requests/${item.id}`}>
+                <a
+                  className={`enquiry-row${item.unread ? ' enquiry-row--unread' : ''}`}
+                  href={`/admin/requests/${item.id}`}
+                  onClick={(event) => {
+                    if (
+                      !event.ctrlKey &&
+                      !event.metaKey &&
+                      !event.shiftKey &&
+                      !event.altKey &&
+                      window.matchMedia('(min-width: 1100px)').matches
+                    ) {
+                      event.preventDefault();
+                      setOpened(item.id);
+                    }
+                  }}
+                >
                   <div className="row-client">
                     <span className="avatar" aria-hidden="true">
                       {item.details.name.slice(0, 1).toUpperCase()}
                     </span>
                     <div>
                       <strong>{item.details.name}</strong>
+                      {item.unread && (
+                        <span className="quote-unread-badge">Unread</span>
+                      )}
                       <span className="muted">{item.details.mobile}</span>
                     </div>
                   </div>
@@ -175,9 +223,10 @@ function EnquiryList() {
                         : item.details.eventType}
                     </strong>
                     <span className="muted">
+                      {eventDate(item.details.eventDate)}
                       {item.details.ceremonies
-                        ? `${item.details.ceremonies.length} ceremony / shoot${item.details.ceremonies.some((c) => c.dateUndecided) ? ' · dates to discuss' : ''}`
-                        : eventDate(item.details.eventDate)}
+                        ? ` · ${item.details.ceremonies.length} ceremony / shoot${item.details.ceremonies.some((c) => c.dateUndecided) ? ' · dates to discuss' : ''}`
+                        : ''}
                     </span>
                   </div>
                   <div className="row-selection">
@@ -201,6 +250,15 @@ function EnquiryList() {
           </ul>
         </section>
       ))}
+      {opened && (
+        <QuoteDrawer
+          id={opened}
+          onClose={() => {
+            setOpened(null);
+            void query.refetch();
+          }}
+        />
+      )}
       {query.hasNextPage && (
         <div className="load-more">
           <button
@@ -220,7 +278,45 @@ function EnquiryList() {
     </>
   );
 }
-function EnquiryDetail({ id }: { id: string }) {
+function QuoteDrawer({ id, onClose }: { id: string; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    element?.showModal();
+    return () => {
+      element?.close();
+      document.body.style.overflow = previous;
+    };
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="quote-drawer"
+      aria-label="Quote request details"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <div className="quote-drawer-toolbar">
+        <Link href={`/admin/requests/${id}`}>Open full page ↗</Link>
+        <button autoFocus onClick={onClose} aria-label="Close quote details">
+          Close ✕
+        </button>
+      </div>
+      <EnquiryDetail id={id} compact />
+    </dialog>
+  );
+}
+function EnquiryDetail({
+  id,
+  compact = false,
+}: {
+  id: string;
+  compact?: boolean;
+}) {
   const query = useQuery({
     queryKey: ['enquiry', id],
     queryFn: ({ signal }) => fetchEnquiry(id, signal),
@@ -230,8 +326,38 @@ function EnquiryDetail({ id }: { id: string }) {
     heading.current?.focus();
   }, [id, query.isSuccess]);
   const record = query.data;
+  const [readError, setReadError] = useState(false);
+  const [readRetry, setReadRetry] = useState(0);
+  useEffect(() => {
+    if (!record) return;
+    const controller = new AbortController();
+    void fetch(`/api/admin/enquiries/${encodeURIComponent(id)}/read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        revision: record.revision,
+        status: record.status,
+      }),
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!controller.signal.aborted) setReadError(!response.ok);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setReadError(true);
+      });
+    return () => controller.abort();
+  }, [id, record, readRetry]);
   return (
     <>
+      {readError && (
+        <p role="status">
+          Could not save read status.{' '}
+          <button onClick={() => setReadRetry((value) => value + 1)}>
+            Retry
+          </button>
+        </p>
+      )}
       {record && (
         <QuotePrint
           details={record.details}
@@ -242,9 +368,11 @@ function EnquiryDetail({ id }: { id: string }) {
           }}
         />
       )}
-      <Link className="back-link" href="/admin/requests">
-        ← All quote requests
-      </Link>
+      {!compact && (
+        <Link className="back-link" href="/admin/requests">
+          ← All quote requests
+        </Link>
+      )}
       {query.isPending && (
         <p role="status" className="empty">
           Loading quote request…
@@ -270,6 +398,23 @@ function EnquiryDetail({ id }: { id: string }) {
               </p>
             </div>
             <Status status={record.status} />
+          </div>
+          <div className="quote-quick-actions">
+            <a
+              className="primary-button"
+              href={`tel:+91${record.details.mobile}`}
+            >
+              Call client
+            </a>
+            <a
+              className="primary-button"
+              href={`https://wa.me/91${record.details.mobile}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp ↗
+            </a>
+            <SaveQuotePdf disabled={query.isFetching} />
           </div>
           <div className="detail-grid">
             <section className="panel contact-panel">
@@ -402,7 +547,6 @@ function EnquiryDetail({ id }: { id: string }) {
                   </div>
                 )}
               </dl>
-              <SaveQuotePdf disabled={query.isFetching} />
               <button
                 disabled={query.isFetching}
                 onClick={() => void query.refetch()}

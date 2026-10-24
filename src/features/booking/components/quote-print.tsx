@@ -77,9 +77,8 @@ export function QuotePrint({
         </div>
       </dl>
       <p className="quote-print-notice">
-        {sample ? 'Development sample prices' : 'Saved quote'} · INR. Final
-        services, crew, deliverables and availability require studio
-        confirmation.
+        {sample ? 'Estimated quote' : 'Saved quote'} · INR. Final services,
+        crew, deliverables and availability require studio confirmation.
       </p>
       <table>
         <thead>
@@ -136,7 +135,7 @@ export function QuotePrint({
         })}
       </table>
       <section className="quote-print-total">
-        <span>{sample ? 'Total sample quote' : 'Total saved quote'}</span>
+        <span>{sample ? 'Total estimated quote' : 'Total saved quote'}</span>
         <strong>{money(saved.total)}</strong>
       </section>
       {(details.albumQuantity ?? 0) > 0 && (
@@ -162,7 +161,7 @@ export function QuotePrint({
       <footer>
         <p>
           {sample
-            ? 'Travel, tax and delivery charges are not included in this sample calculation. '
+            ? 'Travel, tax and delivery charges are not included in this estimate. '
             : 'Prices reflect the saved request; any additional charges require studio confirmation. '}
           Quantities represent service units, multiplied by days where shown.
           This quote is not an invoice, payment receipt or date reservation.

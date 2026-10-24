@@ -97,7 +97,7 @@ For token efficiency, inspect only files relevant to the next requested change a
 
 Phase 1 handoff: shared contracts in `src/features/content/model.ts`, persistence/API actions in `src/server/content.ts`, Cloudinary integration in `src/server/cloudinary.ts`, and reusable admin screen in `src/features/admin/content-manager.tsx`.
 
-Phase 2 handoff: shared public feeds/cards in `src/features/content/public-content.tsx`, pagination in `src/lib/use-paged-feed.ts`, gallery/lightbox in `src/features/gallery/components/gallery-lightbox.tsx`, callback form/schema in `src/features/contact`, persistence in `src/server/callbacks.ts`, and admin request switching in `src/features/admin/requests-dashboard.tsx`.
+Phase 2 handoff: shared public feeds/cards in `src/features/content/public-content.tsx`, pagination in `src/lib/use-paged-feed.ts`, gallery/lightbox in `src/features/gallery/components/gallery-lightbox.tsx`, callback form/schema in `src/features/contact`, persistence in `src/server/callbacks.ts`, and admin quote inbox in `src/features/admin/inbox.tsx`.
 
 Phase 3 handoff: `src/features/booking/components/quote-print.tsx` shares saved-snapshot rendering and print controls between client and `src/features/admin/inbox.tsx`; `src/styles/quote-print.css` handles both layouts. Historical fields are optional and stored prices are never recalculated. Client confirmation and admin detail no longer display reference IDs. Internal IDs, ownership/revision checks and routes remain intact. Regression coverage is in `tests/quote-print.test.ts`. No new dependency or API/auth change was needed.
 

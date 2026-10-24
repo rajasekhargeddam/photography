@@ -10,7 +10,7 @@ export function alertText(alert: TelegramAlert, origin: string) {
   const path =
     alert.kind === 'quote'
       ? `/admin/requests/${encodeURIComponent(alert.id)}`
-      : '/admin/requests';
+      : '/admin/callbacks';
   const publicLink =
     url.protocol === 'https:' &&
     !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);

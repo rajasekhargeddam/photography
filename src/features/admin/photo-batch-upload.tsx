@@ -159,6 +159,23 @@ export function PhotoBatchUpload({
   return (
     <section className="content-form" aria-label="Upload photos">
       <h2>Add photos</h2>
+      {!!entries.length && (
+        <div className="upload-summary" role="status">
+          <strong>
+            {entries.filter((entry) => entry.status === 'saved').length} /{' '}
+            {entries.length} saved
+          </strong>
+          <span>
+            {entries.filter((entry) => entry.status === 'failed').length} need
+            retry
+          </span>
+          <progress
+            aria-label="Overall batch upload progress"
+            max={entries.length * 100}
+            value={entries.reduce((sum, entry) => sum + entry.progress, 0)}
+          />
+        </div>
+      )}
       <fieldset disabled={disabled || running}>
         <label>
           Photos{' '}

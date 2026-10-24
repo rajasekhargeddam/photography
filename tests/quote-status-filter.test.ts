@@ -2,7 +2,31 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Collection } from 'mongodb';
 import type { Enquiry } from '../src/server/enquiries';
-import { MongoEnquiries } from '../src/server/mongo-repository';
+import {
+  MongoEnquiries,
+  enquirySearchPipeline,
+} from '../src/server/mongo-repository';
+
+test('quote search treats special characters literally and filters before pagination', () => {
+  const pipeline = enquirySearchPipeline(30, 30, 'CONFIRMED', {
+    search: 'Raheem (family)+',
+    unread: true,
+  });
+  const match = pipeline[0].$match;
+  const pattern = new RegExp(match.$or[0]['details.name'].$regex, 'i');
+  assert.ok(pattern.test('RAHEEM (family)+'));
+  assert.ok(!pattern.test('Raheem familyyyyy'));
+  assert.equal(match.status, 'CONFIRMED');
+  assert.ok(
+    pipeline.findIndex((step) => step.$lookup) <
+      pipeline.findIndex((step) => step.$skip),
+  );
+  assert.deepEqual(pipeline.slice(-3), [
+    { $sort: { createdAt: -1, _id: -1 } },
+    { $skip: 30 },
+    { $limit: 30 },
+  ]);
+});
 
 test('quote status filters apply before pagination and keep saved and sent records separate', async () => {
   const records = Array.from({ length: 8 }, (_, i) => ({

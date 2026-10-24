@@ -21,7 +21,7 @@ export function BookingThankYou() {
           </h1>
           <p className="booking-note">
             {reference
-              ? 'Our studio will call you to discuss your event, availability and payment. Your date is not reserved yet.'
+              ? 'Our studio will call you to discuss your event and confirm services, availability and final pricing. Your date is not reserved yet.'
               : 'Choose your event and services to build your quote.'}
           </p>
           {quote && <SaveQuotePdf />}

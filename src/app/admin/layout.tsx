@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import '@/styles/admin.css';
 import '@/styles/quote-print.css';
+import '@/styles/admin-workspace.css';
 export const metadata: Metadata = {
   title: 'Studio admin',
   robots: { index: false, follow: false },

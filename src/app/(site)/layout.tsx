@@ -7,6 +7,7 @@ import { CinematicEffects } from '@/components/layout/cinematic-effects';
 import { ImageProtection } from '@/components/layout/image-protection';
 import '@/styles/cinematic.css';
 import { StudioSchema } from '@/components/seo/studio-schema';
+import { WhatsAppButton } from '@/components/layout/whatsapp-button';
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
         <div className="route-scene">{children}</div>
       </main>
       <SiteFooter />
+      <WhatsAppButton />
     </div>
   );
 }

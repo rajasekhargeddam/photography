@@ -110,6 +110,7 @@ export interface EnquiryRepository {
     limit: number,
     offset: number,
     status?: Enquiry['status'],
+    filters?: { search?: string; unread?: boolean },
   ): Promise<Enquiry[]>;
 }
 export const hash = (value: string) =>

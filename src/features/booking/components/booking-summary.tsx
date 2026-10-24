@@ -83,7 +83,7 @@ export function BookingSummary() {
       {!dirty && <QuotePrint details={draft} saved={saved} />}
       <div className="guided-quote">
         <div className="guided-total">
-          <span>Your sample quote</span>
+          <span>Your estimated quote</span>
           <strong aria-live="polite">{money(total)}</strong>
           <span>{dirty ? 'Unsaved changes' : uiCopy.status.savedQuote}</span>
         </div>
@@ -299,15 +299,15 @@ export function BookingSummary() {
             <div className="guided-final-total">
               <span>
                 {dirty
-                  ? 'Updated sample quote · save to review'
-                  : 'Saved sample quote · INR'}
+                  ? 'Updated estimate · save to review'
+                  : 'Saved estimate · INR'}
               </span>
               <strong>{money(total)}</strong>
             </div>
             <p className="guided-note">
               Quantities are service units; the studio will confirm crew and
               deliverables. Travel, tax and delivery charges are excluded from
-              this sample calculation.
+              this estimate.
             </p>
             {error && (
               <p role="alert" className="booking-errors">

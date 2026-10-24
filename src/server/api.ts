@@ -14,8 +14,10 @@ import type { ContentKind } from '../features/content/model';
 import type { CallbackService } from './callbacks';
 import { callbackInput } from '../features/contact/model';
 import type { PricingService } from './pricing';
+import type { QuoteReads } from './quote-reads';
 
 type Services = {
+  quoteReads?: QuoteReads;
   auth: AuthService;
   authRepository: AuthRepository;
   repository: EnquiryRepository;
@@ -59,6 +61,7 @@ export function createApi(getServices: () => Promise<Services>) {
         path === '/api/auth/login' ||
         path === '/api/auth/logout' ||
         path === '/api/admin/enquiries' ||
+        /^\/api\/admin\/enquiries\/[\w-]+\/read$/.test(path) ||
         /^\/api\/(admin\/)?enquiries\/[\w-]+(\/confirm)?$/.test(path);
       if (!known) throw new ApiFailure(404, 'Endpoint not found.');
       // Reject unauthenticated requests before accessing the database.
@@ -113,6 +116,38 @@ export function createApi(getServices: () => Promise<Services>) {
         const { auth, repository, authRepository } = await getServices();
         const admin = await auth.current(token);
         if (!admin) throw new ApiFailure(401, 'Admin sign-in required.');
+        const readMatch = /^\/api\/admin\/enquiries\/([\w-]+)\/read$/.exec(
+          path,
+        );
+        if (readMatch) {
+          if (method !== 'POST')
+            throw new ApiFailure(405, 'Method not allowed.');
+          if (!z.uuid().safeParse(readMatch[1]).success)
+            throw new ApiFailure(400, 'Invalid enquiry reference.');
+          if (!(await authRepository.consume(`read:${admin.id}`, 120, 60)))
+            throw new ApiFailure(429, 'Please wait before trying again.');
+          const input = z
+            .object({
+              revision: z.uuid(),
+              status: z.enum(['ATTEMPTED', 'CONFIRMED']),
+            })
+            .strict()
+            .safeParse(await readJson(request));
+          if (!input.success)
+            throw new ApiFailure(400, 'Invalid read receipt.');
+          const record = await repository.find(readMatch[1]);
+          if (!record) throw new ApiFailure(404, 'Enquiry not found.');
+          if (
+            record.revision !== input.data.revision ||
+            record.status !== input.data.status
+          )
+            throw new ApiFailure(409, 'Quote changed. Refresh its details.');
+          const { quoteReads } = await getServices();
+          if (!quoteReads)
+            throw new ApiFailure(503, 'Read status unavailable.');
+          await quoteReads.mark(record);
+          return json({ success: true });
+        }
         if (path === '/api/admin/pricing') {
           if (!(await authRepository.consume(`pricing:${admin.id}`, 60, 60)))
             throw new ApiFailure(429, 'Please wait before trying again.');
@@ -163,18 +198,27 @@ export function createApi(getServices: () => Promise<Services>) {
               limit: z.coerce.number().int().min(1).max(100).default(30),
               offset: z.coerce.number().int().min(0).max(100000).default(0),
               status: z.enum(['ATTEMPTED', 'CONFIRMED']).optional(),
+              search: z.string().trim().max(100).optional(),
+              unread: z.literal('1').optional(),
             })
             .strict()
             .safeParse(Object.fromEntries(url.searchParams));
           if (!query.success) throw new ApiFailure(400, 'Invalid pagination.');
+          const records = await repository.list(
+            query.data.limit,
+            query.data.offset,
+            query.data.status,
+            { search: query.data.search, unread: query.data.unread === '1' },
+          );
+          const { quoteReads } = await getServices();
+          const unread = quoteReads
+            ? await quoteReads.unread(records)
+            : records.map(() => true);
           return json({
-            enquiries: (
-              await repository.list(
-                query.data.limit,
-                query.data.offset,
-                query.data.status,
-              )
-            ).map(publicEnquiry),
+            enquiries: records.map((record, i) => ({
+              ...publicEnquiry(record),
+              unread: unread[i],
+            })),
           });
         }
         const id = path.slice('/api/admin/enquiries/'.length);

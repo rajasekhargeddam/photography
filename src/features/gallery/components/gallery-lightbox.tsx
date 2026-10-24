@@ -95,16 +95,7 @@ export function GalleryLightbox({
               }}
             >
               <Photo photo={photo} sizes={portfolioImageSizes(view, index)} />
-              <span className="gallery-photo-caption" aria-hidden="true">
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <span>{photo.alt ?? 'A moment to remember'}</span>
-                <span className="gallery-open">↗</span>
-              </span>
             </button>
-            <figcaption className="photo-credit">
-              <span>{photo.category ?? 'Selected work'}</span>
-              <span>{String(index + 1).padStart(2, '0')}</span>
-            </figcaption>
           </figure>
         ))}
       </div>
@@ -125,11 +116,11 @@ export function GalleryLightbox({
       >
         <div className="lightbox-content">
           <div className="lightbox-toolbar">
-            <p aria-live="polite">
+            <p className="lightbox-counter" aria-live="polite">
               {viewer ? `${viewer.index + 1} / ${viewer.photos.length}` : ''}
             </p>
             <button
-              className="icon-button"
+              className="lightbox-icon"
               aria-label="Close photo viewer"
               type="button"
               onClick={() => dialog.current?.close()}
@@ -168,24 +159,28 @@ export function GalleryLightbox({
           )}
           <div className="lightbox-controls">
             <button
-              className="button button--outline"
+              className="lightbox-icon lightbox-previous"
+              aria-label="Previous photo"
+              title="Previous photo"
               type="button"
               onClick={() => move(-1)}
               disabled={!viewer || viewer.photos.length < 2}
             >
-              Previous
+              <Icon name="arrow" />
             </button>
             <button
-              className="button button--outline"
+              className="lightbox-icon lightbox-next"
+              aria-label="Next photo"
+              title="Next photo"
               type="button"
               onClick={() => move(1)}
               disabled={!viewer || viewer.photos.length < 2}
             >
-              Next
+              <Icon name="arrow" />
             </button>
           </div>
           {viewer && (
-            <p className="lightbox-caption" aria-live="polite">
+            <p className="lightbox-caption sr-only" aria-live="polite">
               {viewer.photos[viewer.index].alt}
               {viewer.photos[viewer.index].sample ? ' · Sample photograph' : ''}
             </p>

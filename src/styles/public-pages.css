@@ -276,14 +276,6 @@
 .public-content {
   padding-top: 1rem;
 }
-.public-photo {
-  position: relative;
-  aspect-ratio: 4/5;
-  background: var(--surface);
-}
-.public-photo img {
-  object-fit: cover;
-}
 .public-panorama {
   aspect-ratio: 2/1;
 }
@@ -328,7 +320,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 3.5rem 2rem;
 }
-.service-card .public-photo,
 .commercial-art {
   aspect-ratio: 4/3;
 }

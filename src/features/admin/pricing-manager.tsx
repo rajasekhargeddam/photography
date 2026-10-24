@@ -36,6 +36,21 @@ export function PricingManager() {
       });
     return () => controller.abort();
   }, [attempt]);
+  const changed = priceFields.filter(
+    ({ id }) =>
+      pricing &&
+      (values[id]?.trim() === '' || Number(values[id]) !== pricing.prices[id]),
+  );
+  const dirty = changed.length > 0;
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!pricing || busy) return;
@@ -112,38 +127,79 @@ export function PricingManager() {
         <form onSubmit={save}>
           <fieldset disabled={busy}>
             <legend className="sr-only">Service rates</legend>
-            {priceFields.map((service) => (
-              <label className="pricing-row" key={service.id}>
-                <span>
-                  <strong>{service.name}</strong>
-                  <small>{service.unit}</small>
-                </span>
-                <span className="pricing-input">
-                  <span aria-hidden="true">₹</span>
-                  <input
-                    aria-label={`${service.name} price in rupees`}
-                    type="number"
-                    min="0"
-                    max="1000000"
-                    step="1"
-                    required
-                    value={values[service.id] ?? ''}
-                    onChange={(e) => {
-                      setValues({ ...values, [service.id]: e.target.value });
-                      setMessage('');
-                    }}
-                  />
-                </span>
-              </label>
+            {[
+              { title: 'Photography', ids: ['traditional-photo', 'candid'] },
+              {
+                title: 'Video & aerial coverage',
+                ids: [
+                  'traditional-video',
+                  'cinematic',
+                  'drone',
+                  'audience-video',
+                ],
+              },
+              { title: 'Albums', ids: ['album', 'album-large'] },
+            ].map((group) => (
+              <section className="pricing-group" key={group.title}>
+                <h2>{group.title}</h2>
+                {priceFields
+                  .filter((service) => group.ids.includes(service.id))
+                  .map((service) => (
+                    <label
+                      className={`pricing-row${changed.some((field) => field.id === service.id) ? ' is-dirty' : ''}`}
+                      key={service.id}
+                    >
+                      <span>
+                        <strong>{service.name}</strong>
+                        <small>{service.unit}</small>
+                      </span>
+                      <span className="pricing-input">
+                        <span aria-hidden="true">₹</span>
+                        <input
+                          aria-label={`${service.name} price in rupees`}
+                          type="number"
+                          min="0"
+                          max="1000000"
+                          step="1"
+                          required
+                          value={values[service.id] ?? ''}
+                          onChange={(e) => {
+                            setValues({
+                              ...values,
+                              [service.id]: e.target.value,
+                            });
+                            setMessage('');
+                          }}
+                        />
+                      </span>
+                    </label>
+                  ))}
+              </section>
             ))}
             <div className="pricing-actions">
-              <button className="button button--primary" type="submit">
+              <p role="status">
+                {dirty
+                  ? `${changed.length} unsaved change${changed.length === 1 ? '' : 's'}`
+                  : 'All prices saved'}
+              </p>
+              <button
+                className="button button--primary"
+                type="submit"
+                disabled={!dirty || busy}
+              >
                 {busy ? 'Saving…' : 'Save prices'}
               </button>
               <button
                 type="button"
                 className="button button--outline"
                 onClick={() => {
+                  if (
+                    dirty &&
+                    !window.confirm(
+                      'Discard unsaved price changes and reload saved prices?',
+                    )
+                  )
+                    return;
                   setPricing(null);
                   setError('');
                   setMessage('');

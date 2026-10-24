@@ -1,5 +1,4 @@
 import { uiCopy } from '@/config/copy';
-import Image from 'next/image';
 import { Container, Eyebrow, Section } from './layout';
 import { ButtonLink } from './button';
 import { Icon } from './icon';
@@ -20,26 +19,6 @@ export function PageIntro({
         {description && <p>{description}</p>}
       </Container>
     </Section>
-  );
-}
-export function PublicPhoto({
-  image,
-  alt,
-  className = '',
-}: {
-  image: number;
-  alt: string;
-  className?: string;
-}) {
-  return (
-    <div className={`public-photo ${className}`}>
-      <Image
-        src={`/images/home/stitch-${image}.jpg`}
-        alt={alt}
-        fill
-        sizes="(max-width: 700px) 90vw, 50vw"
-      />
-    </div>
   );
 }
 export function EventCallout() {

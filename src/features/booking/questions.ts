@@ -6,7 +6,6 @@ type Question = {
   kind:
     | 'event'
     | 'shoot-type'
-    | 'other-type'
     | 'include'
     | 'duration'
     | 'coverage'
@@ -35,13 +34,6 @@ export function questionsFor(draft: BookingDraft): Question[] {
       title: 'Before or after the wedding?',
       subtitle: 'Choose the shoot you are planning.',
     });
-  if (['Other', 'Baby Shoot', 'Corporate'].includes(draft.eventType))
-    questions.push({
-      id: 'other-type',
-      kind: 'other-type',
-      title: 'Tell us about your occasion',
-      subtitle: 'Choose a studio service or continue with another event.',
-    });
   const definitions =
     draft.eventType === 'Marriage'
       ? weddingCeremonies
@@ -62,7 +54,7 @@ export function questionsFor(draft: BookingDraft): Question[] {
         kind: 'duration',
         ceremonyId: c.id,
         title: `How many days for ${c.name.toLowerCase()}?`,
-        subtitle: 'Sample coverage is charged per service, per day.',
+        subtitle: 'Coverage is charged per service, per day.',
       });
     questions.push({
       id: `coverage:${c.id}`,
@@ -87,7 +79,7 @@ export function questionsFor(draft: BookingDraft): Question[] {
       kind: 'album-size',
       title: 'Choose an album size',
       subtitle:
-        'Sample sizes and rates; pages and finish will be confirmed with the studio.',
+        'Choose your preferred size. Pages, finish and final pricing require studio confirmation.',
     });
     questions.push({
       id: 'album-delivery',

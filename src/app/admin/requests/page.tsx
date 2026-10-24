@@ -1,6 +1,6 @@
-import { RequestsDashboard } from '@/features/admin/requests-dashboard';
+import { AdminInbox } from '@/features/admin/inbox';
 import { requireAdmin } from '@/server/admin-session';
 export default async function RequestsPage() {
   await requireAdmin();
-  return <RequestsDashboard />;
+  return <AdminInbox />;
 }

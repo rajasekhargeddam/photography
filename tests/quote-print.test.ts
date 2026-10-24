@@ -35,7 +35,7 @@ test('historical print preserves saved package prices without requiring ceremony
     /internal-package-id|Reference|Development sample|undefined|NaN/,
   );
 });
-test('guided print uses snapshot amounts, groups, notes and sample notice for both saved and confirmed states', () => {
+test('guided print uses snapshot amounts, groups, notes and estimate notice for both saved and confirmed states', () => {
   for (const status of ['ATTEMPTED', 'CONFIRMED'] as const) {
     const html = renderToStaticMarkup(
       createElement(QuotePrint, {
@@ -72,7 +72,7 @@ test('guided print uses snapshot amounts, groups, notes and sample notice for bo
     assert.match(html, /Keep these notes/);
     assert.match(html, /14 × 40/);
     assert.match(html, /3 months/);
-    assert.match(html, /Development sample prices/);
+    assert.match(html, /Estimated quote/);
     assert.match(
       html,
       status === 'CONFIRMED' ? /Sent to studio/ : /not sent to studio/,

@@ -149,7 +149,20 @@ export class ContentService {
     return { ...completed, ...image, state: 'ready' as const };
   }
   async initialize() {
-    await this.records.createIndex({ kind: 1, state: 1, createdAt: -1 });
+    // Match public collection ordering, including stable pagination ties.
+    await this.records.createIndex({
+      kind: 1,
+      state: 1,
+      createdAt: -1,
+      _id: 1,
+    });
+    await this.records.createIndex({
+      kind: 1,
+      state: 1,
+      category: 1,
+      createdAt: -1,
+      _id: 1,
+    });
     await this.records.createIndex(
       { heroSlot: 1 },
       {

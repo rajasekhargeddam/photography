@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ceremonySchema } from '../booking/quote';
 
 export const enquirySchema = z.object({
+  unread: z.boolean().optional(),
   id: z.uuid(),
   revision: z.uuid(),
   status: z.enum(['ATTEMPTED', 'CONFIRMED']),
@@ -70,10 +71,12 @@ export async function fetchEnquiries(
   offset: number,
   signal: AbortSignal,
   status?: Enquiry['status'],
+  search = '',
+  unread = false,
 ) {
   const result = listSchema.safeParse(
     await request(
-      `enquiries?limit=30&offset=${offset}${status ? `&status=${status}` : ''}`,
+      `enquiries?limit=30&offset=${offset}${status ? `&status=${status}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}${unread ? '&unread=1' : ''}`,
       signal,
     ),
   );

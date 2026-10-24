@@ -79,6 +79,9 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
   const [items, setItems] = useState<ContentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkCategory, setBulkCategory] = useState<string>(categories[0]);
+  const [bulkProgress, setBulkProgress] = useState('');
   const [error, setError] = useState<ReturnType<typeof contentError> | null>(
     null,
   );
@@ -171,6 +174,42 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
     } catch (cause) {
       setError(contentError(cause));
     } finally {
+      setBusy(false);
+    }
+  }
+  async function applyBulkCategory() {
+    if (busy || !selected.length) return;
+    setBusy(true);
+    setError(null);
+    setNotice('');
+    const photos = items.filter(
+      (item) => selected.includes(item._id) && item.state === 'ready',
+    );
+    const succeeded: string[] = [];
+    try {
+      for (const [index, item] of photos.entries()) {
+        setBulkProgress(`Updating ${index + 1} of ${photos.length}…`);
+        if (item.category !== bulkCategory)
+          await api(`${endpoint}/${item._id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              category: bulkCategory,
+              previousCategory: item.category,
+            }),
+          });
+        succeeded.push(item._id);
+      }
+      setNotice(`${succeeded.length} photos are now in ${bulkCategory}.`);
+    } catch (cause) {
+      setError(contentError(cause));
+      setNotice(
+        `${succeeded.length} updates confirmed. Review the refreshed list and select any remaining photos to retry.`,
+      );
+    } finally {
+      setSelected([]);
+      setBulkProgress('');
+      await load();
       setBusy(false);
     }
   }
@@ -312,6 +351,7 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
                 setItems([]);
                 setMore(false);
                 setCategory(value);
+                setSelected([]);
                 setDeleting(null);
                 setError(null);
               }}
@@ -330,6 +370,53 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
         </div>
       )}
       <h2>Saved {titles[kind].toLowerCase()}</h2>
+      {kind === 'gallery' && (
+        <div
+          className="media-bulk-toolbar"
+          aria-label="Bulk photo category tools"
+        >
+          <button
+            disabled={busy || loading}
+            onClick={() =>
+              setSelected(
+                items
+                  .filter((item) => item.state === 'ready')
+                  .slice(0, 30)
+                  .map((item) => item._id),
+              )
+            }
+          >
+            Select up to 30 loaded photos
+          </button>
+          <span>{selected.length} selected</span>
+          {!!selected.length && (
+            <>
+              <label>
+                Move to{' '}
+                <select
+                  value={bulkCategory}
+                  disabled={busy}
+                  onChange={(event) => setBulkCategory(event.target.value)}
+                >
+                  {categories.map((value) => (
+                    <option key={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                disabled={busy || loading}
+                onClick={() => void applyBulkCategory()}
+              >
+                Apply category
+              </button>
+              <button disabled={busy} onClick={() => setSelected([])}>
+                Clear
+              </button>
+            </>
+          )}
+          <span role="status">{bulkProgress}</span>
+        </div>
+      )}
       {loading && <p role="status">Loading…</p>}
       {!loading && !items.length && (
         <p>
@@ -338,7 +425,31 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
       )}
       <div className="content-grid">
         {items.map((item) => (
-          <article className="content-card" key={item._id}>
+          <article
+            className={`content-card${selected.includes(item._id) ? ' is-selected' : ''}`}
+            key={item._id}
+          >
+            {kind === 'gallery' && item.state === 'ready' && (
+              <label className="media-select">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(item._id)}
+                  disabled={
+                    busy ||
+                    loading ||
+                    (!selected.includes(item._id) && selected.length >= 30)
+                  }
+                  onChange={(event) =>
+                    setSelected((ids) =>
+                      event.target.checked
+                        ? [...ids, item._id]
+                        : ids.filter((id) => id !== item._id),
+                    )
+                  }
+                />
+                Select photo
+              </label>
+            )}
             {(item.kind === 'gallery' || item.kind === 'hero') && item.url && (
               <button
                 className="admin-photo-thumbnail"
@@ -367,7 +478,7 @@ export function ContentManager({ kind }: { kind: ContentKind }) {
                       : undefined
                   }
                   unoptimized={!isCloudinaryPhoto(item.url)}
-                  sizes="(max-width: 700px) 90vw, 320px"
+                  sizes="(max-width: 700px) 90vw, (max-width: 1200px) 45vw, 420px"
                 />
                 <span>Preview photo</span>
               </button>

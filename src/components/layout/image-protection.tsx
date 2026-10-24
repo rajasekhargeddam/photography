@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 export function ImageProtection() {
   useEffect(() => {
     const imageSurfaces =
-      'img, picture, .gallery-tile, .lightbox-photo, .hero-slide, .studio-photo, .public-photo, .brand-logo, .services-photo-space, .guided-card-media';
+      'img, picture, .gallery-tile, .lightbox-photo, .hero-slide, .studio-photo, .brand-logo, .services-photo-space, .guided-card-media';
     const preventImageAction = (event: Event) => {
       const target = event.target;
       if (

@@ -10,7 +10,7 @@ The dispatcher reconciles saved MongoDB requests into the `telegramNotifications
 
 For local development or a persistent Node server, run `npm run telegram:worker` alongside the website. It checks every 15 seconds. `npm run telegram:worker -- --once` processes one batch and exits.
 
-For serverless hosting, configure a scheduler to POST `/api/telegram/retry` every minute with `Authorization: Bearer <TELEGRAM_RETRY_SECRET>`. Do not place the secret in the URL. The endpoint fails closed when no secret is configured. Scheduling is hosting-specific and is not automatically deployed by this repository. Successful admin API visits and request submissions also trigger the dispatcher, but are not a substitute for scheduled retries during quiet periods.
+For serverless hosting, configure a scheduler to POST `/api/telegram/retry` every minute with `Authorization: Bearer <TELEGRAM_RETRY_SECRET>`. Do not place the secret in the URL. The endpoint fails closed when no secret is configured. Scheduling is hosting-specific and is not automatically deployed by this repository. Successful admin API visits also trigger the dispatcher at most once per minute per running instance. Successful callback and quote-confirmation submissions bypass that throttle. These triggers are not a substitute for scheduled retries during quiet periods.
 
 Normal repeated submissions and concurrent workers do not repeat successful alerts. Telegram has no sendMessage idempotency key: if Telegram accepts a message but its response or the subsequent database update is lost, a retry can duplicate the message. This rare at-least-once delivery tradeoff avoids silently dropping alerts. Reference IDs help identify duplicates.
 

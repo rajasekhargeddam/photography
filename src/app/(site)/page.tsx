@@ -57,43 +57,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <Section className="studio-manifesto" aria-labelledby="manifesto-title">
-        <Container>
-          <div className="manifesto-index">
-            <span>01 / The way we see it</span>
-            <span>My Dream · A photography studio</span>
-          </div>
-          <Eyebrow>More than a photograph</Eyebrow>
-          <h2 id="manifesto-title">
-            The way it looked.
-            <br />
-            <em>The way it felt.</em>
-          </h2>
-          <div className="manifesto-bottom">
-            <p>
-              The grand celebrations. The almost-missed glances. The people who
-              make it all mean something. A little of your world, held still.
-            </p>
-            <ButtonLink href="/about" variant="text">
-              Discover our approach <Icon name="arrow" />
-            </ButtonLink>
-          </div>
-          <nav className="story-index" aria-label="Explore our photography">
-            <a href="/services#weddings">
-              <span>01</span> Weddings <span aria-hidden="true">↗</span>
-            </a>
-            <a href="/services#pre-wedding">
-              <span>02</span> Just the two of you{' '}
-              <span aria-hidden="true">↗</span>
-            </a>
-            <a href="/services#celebrations">
-              <span>03</span> Life’s celebrations{' '}
-              <span aria-hidden="true">↗</span>
-            </a>
-          </nav>
-        </Container>
-      </Section>
-
       <Section
         id="selected-work"
         className="selected-work"
@@ -112,6 +75,43 @@ export default function HomePage() {
             </ButtonLink>
           </div>
           <PublicGallery preview />
+        </Container>
+      </Section>
+
+      <Section className="studio-manifesto" aria-labelledby="manifesto-title">
+        <Container>
+          <div className="manifesto-index">
+            <span>01 / The way we see it</span>
+            <span>My Dream · A photography studio</span>
+          </div>
+          <Eyebrow>More than a photograph</Eyebrow>
+          <h2 id="manifesto-title">
+            The way it looked.
+            <br />
+            <em>The way it felt.</em>
+          </h2>
+          <div className="manifesto-bottom">
+            <p>
+              Real celebrations, quiet moments, and the people who matter most.
+              Photographed with care, remembered for a lifetime.
+            </p>
+            <ButtonLink href="/about" variant="text">
+              Discover our approach <Icon name="arrow" />
+            </ButtonLink>
+          </div>
+          <nav className="story-index" aria-label="Explore our photography">
+            <a href="/services#weddings">
+              <span>01</span> Weddings <span aria-hidden="true">↗</span>
+            </a>
+            <a href="/services#pre-wedding">
+              <span>02</span> Just the two of you{' '}
+              <span aria-hidden="true">↗</span>
+            </a>
+            <a href="/services#celebrations">
+              <span>03</span> Life’s celebrations{' '}
+              <span aria-hidden="true">↗</span>
+            </a>
+          </nav>
         </Container>
       </Section>
 

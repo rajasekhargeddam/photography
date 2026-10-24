@@ -123,7 +123,7 @@ export function BookingWizard() {
     <div className="guided-quote">
       {!intro && (
         <div className="guided-total">
-          <span>Your sample quote</span>
+          <span>Your estimated quote</span>
           <strong aria-live="polite">{money(quoteTotal(draft, prices))}</strong>
           <progress
             value={index + 1}
@@ -154,8 +154,8 @@ export function BookingWizard() {
               {uiCopy.actions.buildQuote} →
             </button>
             <p className="guided-note">
-              Development sample prices. Final services, availability and
-              charges need studio confirmation.
+              Estimated prices. Final services, availability and charges need
+              studio confirmation.
             </p>
           </div>
         </section>
@@ -214,20 +214,6 @@ export function BookingWizard() {
                 ))}
               </div>
             )}
-            {q.kind === 'other-type' && (
-              <div className="guided-cards">
-                {['Baby Shoot', 'Corporate', 'Other'].map((event) => (
-                  <QuoteCard
-                    key={event}
-                    title={event === 'Other' ? 'Other event' : event}
-                    image={
-                      event === 'Baby Shoot' ? serviceImages.newborn : null
-                    }
-                    onClick={() => advance(actions.chooseEvent(event))}
-                  />
-                ))}
-              </div>
-            )}
             {q.kind === 'include' && (
               <div className="guided-cards guided-two">
                 <QuoteCard
@@ -271,8 +257,8 @@ export function BookingWizard() {
                       title={service.name}
                       description={
                         isCoupleShoot(draft.eventType, c.id)
-                          ? 'Sample rate per day'
-                          : 'Sample rate per ceremony'
+                          ? 'Estimated rate per day'
+                          : 'Estimated rate per ceremony'
                       }
                       price={`+ ${money(service.price)}`}
                       service={service.id}
@@ -326,7 +312,7 @@ export function BookingWizard() {
                   <QuoteCard
                     key={size}
                     title={size.replace('x', ' × ')}
-                    description="Sample size · pages and finish to be agreed"
+                    description="Pages and finish to be agreed"
                     price={`+ ${money(albumPrice(size, prices))} per album`}
                     icon="▤"
                     onClick={() =>

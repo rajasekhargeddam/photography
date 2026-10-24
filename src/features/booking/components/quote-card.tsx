@@ -39,7 +39,17 @@ export function QuoteCard({
     >
       {selected !== undefined && (
         <span className="guided-tick" aria-hidden="true">
-          {selected ? '✓ Selected' : 'Select'}
+          {selected && (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="m5 12 4 4L19 6"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </span>
       )}
       <span

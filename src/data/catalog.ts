@@ -68,7 +68,7 @@ export const services: StudioService[] = [
 
 // All rates and eligibility remain development samples, not studio-approved offers.
 export const catalogueNotice =
-  'Development sample rates. Services, inclusions and final pricing require studio confirmation. Travel, tax and delivery are not calculated.';
+  'Estimated prices. Final services, availability and pricing require studio confirmation. Travel, tax and delivery charges are excluded.';
 export const bookableServices = [
   { id: 'traditional-photo', name: 'Traditional photography', price: 10000 },
   { id: 'traditional-video', name: 'Traditional video', price: 12000 },

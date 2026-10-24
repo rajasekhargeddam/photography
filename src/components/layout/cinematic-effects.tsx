@@ -56,7 +56,7 @@ export function CinematicEffects() {
     const collect = () => {
       root
         .querySelectorAll(
-          '.section-heading, .public-intro h1, .gallery-item, .studio-photo, .public-photo, .testimonial-card, .video-card, .guided-question',
+          '.section-heading, .public-intro h1, .gallery-item, .studio-photo, .testimonial-card, .video-card, .guided-question',
         )
         .forEach((element) => {
           if (seen.has(element)) return;
