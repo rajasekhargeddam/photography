@@ -1,10 +1,9 @@
 'use client';
 import { groupByReceivedDay, receivedAt } from './data';
-import type { CallbackRequest } from '../contact/model';
-import { usePagedFeed } from '@/lib/use-paged-feed';
+import { useCallbacks } from './use-callbacks';
 
 export function CallbackList() {
-  const feed = usePagedFeed<CallbackRequest>('/api/admin/callbacks');
+  const feed = useCallbacks();
   const groups = groupByReceivedDay(feed.items, (request) => request._id);
   return (
     <section aria-label="Call requests">

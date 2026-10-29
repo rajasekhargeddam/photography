@@ -5,6 +5,7 @@ import { themeInitScript } from '@/config/theme';
 import { site } from '@/config/site';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import '@/styles/globals.css';
+import { PublicQueryProvider } from '@/components/providers/public-query-provider';
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -30,7 +31,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <PublicQueryProvider>{children}</PublicQueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 'use client';
 import { useState, type FormEvent } from 'react';
+import { checkLoginResponse } from './login-response';
 
 export function LoginForm() {
   const [pending, setPending] = useState(false);
@@ -19,10 +20,7 @@ export function LoginForm() {
           password: form.get('password'),
         }),
       });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message ?? 'Unable to sign in.');
-      }
+      await checkLoginResponse(response);
       window.location.replace('/admin/requests');
     } catch (cause) {
       setError(

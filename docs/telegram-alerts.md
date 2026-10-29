@@ -1,17 +1,25 @@
-# Telegram enquiry alerts
+# Telegram operation
 
-Server-only configuration: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_ALERTS_SINCE` (ISO UTC activation time), and `TELEGRAM_RETRY_SECRET`. Never commit tokens or prefix them with NEXT_PUBLIC_. Copy these settings to the hosting provider at deployment. Keep the original activation time when redeploying.
+The lite app is the active sender. The original retains the same formatting/queue code but returns before dispatch unless TELEGRAM_LOCAL_DISPATCH_ENABLED=true. Keep that flag unset/false while lite operates. The old hosted sender's token was removed during cutover; do not re-enable a second sender.
 
-New call requests and confirmed/submitted quotes trigger delivery using Next.js `after`, after the response is sent. Draft quotes and records older than the activation time are excluded. Messages contain event, date, reference and an admin link, without phone numbers or private notes. Localhost links are omitted; set NEXT_PUBLIC_SITE_URL to the actual HTTPS domain at launch.
+## Messages and queue
 
-The dispatcher reconciles saved MongoDB requests into the `telegramNotifications` collection. It marks source records only after enqueueing, uses stable per-request IDs, and serializes delivery across instances. Telegram errors remain queued with backoff, including Telegram's retry_after. Each run processes at most three messages, spaced 3.1 seconds apart.
+Confirmed quotes and callback requests are eligible; draft quotes and records before TELEGRAM_ALERTS_SINCE are excluded. Messages include saved customer name/phone, event details, selected services, recorded prices, album preferences and notes where available. Readable sections, India-time timestamps and production admin links help the studio follow up. Never put access tokens or credentials in notifications.
 
-## Reliable retries when nobody visits the site
+Messages use plain text. Parts are persisted before sending and nextPart advances after each successful part. Each run sends at most three parts, spaced 3.1 seconds apart, under a shared MongoDB lease. Failed delivery stays queued with backoff. A lost Telegram response/database acknowledgement can cause a duplicate part; delivery is at least once, not exactly once.
 
-For local development or a persistent Node server, run `npm run telegram:worker` alongside the website. It checks every 15 seconds. `npm run telegram:worker -- --once` processes one batch and exits.
+The shared telegramNotifications collection contains personal information. Keep its access private; do not dump queue payloads into logs or public endpoints. Preserve the existing activation timestamp and sent-job records during deployments.
 
-For serverless hosting, configure a scheduler to POST `/api/telegram/retry` every minute with `Authorization: Bearer <TELEGRAM_RETRY_SECRET>`. Do not place the secret in the URL. The endpoint fails closed when no secret is configured. Scheduling is hosting-specific and is not automatically deployed by this repository. Successful admin API visits also trigger the dispatcher at most once per minute per running instance. Successful callback and quote-confirmation submissions bypass that throttle. These triggers are not a substitute for scheduled retries during quiet periods.
+## Triggers and retries
 
-Normal repeated submissions and concurrent workers do not repeat successful alerts. Telegram has no sendMessage idempotency key: if Telegram accepts a message but its response or the subsequent database update is lost, a retry can duplicate the message. This rare at-least-once delivery tradeoff avoids silently dropping alerts. Reference IDs help identify duplicates.
+Successful callback/quote-confirmation submissions trigger background delivery. Admin browsing does not. The deployed lite scheduler runs every five minutes through an APP service binding; quiet periods still incur scheduler/service/database work. Backlogs and cooldowns can delay delivery beyond five minutes.
 
-No webhook or inbound bot-message polling is needed for alerts. Enable Telegram phone notifications and leave the group unmuted. The website must be running/deployed; phone delivery timing is subject to Telegram, internet access and device settings.
+Configure TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_ALERTS_SINCE and NEXT_PUBLIC_SITE_URL on the lite app. Its TELEGRAM_RETRY_SECRET must match the scheduler's secret. The protected POST /api/telegram/retry rejects missing/wrong authorization; missing delivery configuration returns 503. See [deployment setup](deployment.md).
+
+npm run telegram:worker is an optional local loop; -- --once processes one batch. Use only an isolated development destination, or an intentional sender cutover. It is not needed on the laptop for hosted delivery. The original's default guard also applies to this local command.
+
+## Troubleshooting
+
+Check bot membership/send permission, the selected chat, configured activation cutoff, matching retry secrets and scheduler errors. Inspect queue status/counts without exposing customer details. Preserve pending jobs and successful part progress; do not clear the queue to fix delivery. Confirm saved source requests exist if legacy pending summaries cannot be hydrated.
+
+The user previously confirmed the enquiry/admin/Telegram flow works. That confirmation does not replace checking the scheduler after a new release. Routine tests use fake transports and do not send messages to the group.

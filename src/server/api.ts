@@ -52,6 +52,32 @@ export function createApi(getServices: () => Promise<Services>) {
         await getServices();
         return json({ status: 'ok' });
       }
+      if (path === '/api/home') {
+        if (method !== 'GET') throw new ApiFailure(405, 'Method not allowed.');
+        if (url.search) throw new ApiFailure(400, 'Invalid home query.');
+        const { content } = await getServices();
+        if (!content) throw new ApiFailure(503, 'Content service unavailable.');
+        const sections = [
+          ['hero', 5],
+          ['gallery', 8],
+          ['testimonials', 3],
+          ['videos', 1],
+        ] as const;
+        const entries = await Promise.all(
+          sections.map(async ([kind, limit]) => {
+            const response = await content.handle(
+              new Request(
+                new URL('/api/content/' + kind + '?limit=' + limit, url),
+              ),
+              kind,
+              undefined,
+              false,
+            );
+            return [kind, await response.json()];
+          }),
+        );
+        return json(Object.fromEntries(entries));
+      }
       const known =
         path === '/api/pricing' ||
         path === '/api/admin/pricing' ||

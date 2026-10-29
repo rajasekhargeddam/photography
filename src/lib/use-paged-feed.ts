@@ -1,98 +1,83 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
+import {
+  fetchPublicJson,
+  fetchHome,
+  homeFeeds,
+  nextOffset,
+  PUBLIC_STALE_MS,
+  type FeedPage,
+} from './public-data';
 
-/** Shared no-cache pagination. Revisit/focus refreshes admin-managed content. */
+/** Public-only, memory-cached pagination. Private admin feeds use a separate hook. */
 export function usePagedFeed<T extends { _id: string }>(
   endpoint: string,
   pageSize = 30,
   {
     enabled = true,
-    refreshOnFocus = true,
+    refreshOnFocus = false,
   }: { enabled?: boolean; refreshOnFocus?: boolean } = {},
 ) {
-  const [items, setItems] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [more, setMore] = useState(false);
-  const [total, setTotal] = useState<number | null>(null);
-  const loadedEndpoint = useRef('');
-  const nextOffset = useRef(0);
-  const retryOffset = useRef(0);
-  const pending = useRef(false);
-  const active = useRef<AbortController | null>(null);
-  const load = useCallback(
-    async (offset = 0) => {
-      active.current?.abort();
-      const controller = new AbortController();
-      active.current = controller;
-      setLoading(true);
-      setError('');
-      retryOffset.current = offset;
-      pending.current = true;
-      try {
-        const response = await fetch(
-          `${endpoint}${endpoint.includes('?') ? '&' : '?'}offset=${offset}`,
-          { cache: 'no-store', signal: controller.signal },
-        );
-        if (!response.ok)
-          throw new Error(
-            response.status === 401
-              ? 'Please sign in again to view requests.'
-              : 'Unable to load this content. Please try again.',
-          );
-        const data: { items: T[]; total?: number; hasMore?: boolean } =
-          await response.json();
-        if (!Array.isArray(data.items))
-          throw new Error('Unable to read this content. Please try again.');
-        if (!controller.signal.aborted) {
-          setItems((old) =>
-            offset
-              ? [
-                  ...new Map(
-                    [...old, ...data.items].map((item) => [item._id, item]),
-                  ).values(),
-                ]
-              : data.items,
-          );
-          nextOffset.current = offset + data.items.length;
-          loadedEndpoint.current = endpoint;
-          setTotal(typeof data.total === 'number' ? data.total : null);
-          setMore(data.hasMore ?? data.items.length === pageSize);
-        }
-      } catch (cause) {
-        if (!controller.signal.aborted) setError((cause as Error).message);
-      } finally {
-        if (!controller.signal.aborted) {
-          pending.current = false;
-          setLoading(false);
-        }
-      }
+  const pathname = usePathname();
+  const section = pathname === '/' ? homeFeeds[endpoint] : undefined;
+  const home = useQuery<Record<string, FeedPage<T>>>({
+    queryKey: ['public-home'],
+    enabled: enabled && !!section,
+    staleTime: PUBLIC_STALE_MS,
+    queryFn: async ({ signal }) =>
+      (await fetchHome(signal)) as Record<string, FeedPage<T>>,
+  });
+  const query = useInfiniteQuery({
+    queryKey: ['public-feed', endpoint],
+    initialPageParam: 0,
+    enabled: enabled && !section,
+    staleTime: PUBLIC_STALE_MS,
+    refetchOnWindowFocus: refreshOnFocus,
+    queryFn: async ({ pageParam, signal }): Promise<FeedPage<T>> => {
+      const page: FeedPage<T> = await fetchPublicJson(
+        endpoint + (endpoint.includes('?') ? '&' : '?') + 'offset=' + pageParam,
+        signal,
+      );
+      if (!page || !Array.isArray(page.items))
+        throw new Error('Unable to read this content. Please try again.');
+      return page;
     },
-    [endpoint, pageSize],
-  );
-  useEffect(() => {
-    if (!enabled) return;
-    const refresh = () => {
-      void load();
+    getNextPageParam: (lastPage, _pages, offset) =>
+      nextOffset(lastPage, offset, pageSize),
+  });
+  if (section) {
+    const page = home.data?.[section];
+    return {
+      items: page?.items ?? [],
+      loading: enabled && home.isFetching,
+      error: home.error?.message ?? '',
+      more: false,
+      total: page?.total ?? null,
+      reload: () => home.refetch(),
+      retry: () => home.refetch(),
+      loadMore: () => undefined,
     };
-    if (loadedEndpoint.current !== endpoint) refresh();
-    else if (pending.current) void load(retryOffset.current);
-    if (refreshOnFocus) window.addEventListener('focus', refresh);
-    return () => {
-      active.current?.abort();
-      window.removeEventListener('focus', refresh);
-    };
-  }, [load, endpoint, enabled, refreshOnFocus]);
+  }
+  const items = [
+    ...new Map(
+      (query.data?.pages.flatMap((page) => page.items) ?? []).map((item) => [
+        item._id,
+        item,
+      ]),
+    ).values(),
+  ];
   return {
     items,
-    loading,
-    error,
-    more,
-    total,
-    reload: () => load(),
-    retry: () => load(retryOffset.current),
+    loading: enabled && query.isFetching,
+    error: query.error?.message ?? '',
+    more: query.hasNextPage,
+    total: query.data?.pages[0]?.total ?? null,
+    reload: () => query.refetch(),
+    retry: () =>
+      query.isFetchNextPageError ? query.fetchNextPage() : query.refetch(),
     loadMore: () => {
-      if (!loading) return load(nextOffset.current);
+      if (!query.isFetching) return query.fetchNextPage();
     },
   };
 }

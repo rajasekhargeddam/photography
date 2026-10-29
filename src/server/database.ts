@@ -1,5 +1,10 @@
 import 'server-only';
+import {
+  ContentPublication,
+  type PublicationRecord,
+} from './content-publication';
 import { MongoClient } from 'mongodb';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { MongoAuth } from './mongo-auth';
 import { MongoEnquiries } from './mongo-repository';
 import { type Enquiry, EnquiryService } from './enquiries';
@@ -37,8 +42,8 @@ async function mongoClient() {
   });
   return connections.photographyMongoClient;
 }
-async function connect() {
-  const client = await mongoClient();
+async function connect(client?: MongoClient, initialize = true) {
+  client ??= await mongoClient();
   const db = client.db(process.env.MONGODB_DATABASE ?? 'photography');
   const repository = new MongoEnquiries(db.collection<Enquiry>('enquiries'));
   const authRepository = new MongoAuth(db);
@@ -47,13 +52,17 @@ async function connect() {
   const callbacks = new CallbackService(
     db.collection<CallbackRequest>('callbacks'),
   );
-  await Promise.all([
-    repository.initialize(),
-    authRepository.initialize(),
-    content.initialize(),
-    callbacks.initialize(),
-  ]);
+  if (initialize)
+    await Promise.all([
+      repository.initialize(),
+      authRepository.initialize(),
+      content.initialize(),
+      callbacks.initialize(),
+    ]);
   return {
+    publication: new ContentPublication(
+      db.collection<PublicationRecord>('contentPublications'),
+    ),
     quoteReads: new QuoteReads(db.collection<QuoteRead>('quoteReads')),
     drainTelegram: () => drainTelegram(db),
     repository,
@@ -72,4 +81,44 @@ export function database() {
     throw error;
   });
   return services;
+}
+
+// Production schema/index provisioning belongs to setup, never visitor requests.
+
+// Workers cannot reuse sockets created by another request. Keep this connection
+// alive only for the operation, including failures, and create it lazily so that
+// rejected/unknown API requests never connect to MongoDB.
+export async function withDatabase<T>(
+  operation: (getDatabase: typeof database) => Promise<T>,
+): Promise<T> {
+  let isWorker = false;
+  try {
+    getCloudflareContext();
+    isWorker = true;
+  } catch {
+    // The regular Next.js Node server retains its existing connection pool.
+  }
+  if (!isWorker) return operation(database);
+
+  let client: MongoClient | undefined;
+  let scopedServices: ReturnType<typeof connect> | undefined;
+  const getDatabase = () => {
+    scopedServices ??= (async () => {
+      if (!process.env.MONGODB_URI)
+        throw new Error('Database configuration is missing.');
+      client = new MongoClient(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: 1,
+      });
+      await client.connect();
+      const result = await connect(client, false);
+      return result;
+    })();
+    return scopedServices;
+  };
+  try {
+    return await operation(getDatabase);
+  } finally {
+    await client?.close();
+  }
 }

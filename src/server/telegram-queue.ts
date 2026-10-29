@@ -3,7 +3,9 @@ import { randomUUID } from 'node:crypto';
 import type { Enquiry } from './enquiries';
 import type { CallbackRequest } from '../features/contact/model';
 import {
-  alertText,
+  alertMessages,
+  callbackAlert,
+  quoteAlert,
   sendTelegram,
   TelegramFailure,
   type TelegramAlert,
@@ -13,13 +15,26 @@ type Job = {
   _id: string;
   alert?: TelegramAlert;
   sent?: boolean;
+  messages?: string[];
+  nextPart?: number;
   nextAttempt: Date;
   lease?: string;
   attempts: number;
 };
 type Marked = { telegramQueued?: boolean };
 
-export async function drainTelegram(db: Db, deliver = sendTelegram) {
+export async function drainTelegram(
+  db: Db,
+  deliver = sendTelegram,
+  pause = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms)),
+) {
+  // Delivery remains owned by the lite deployment after the shared-database cutover.
+  if (
+    deliver === sendTelegram &&
+    process.env.TELEGRAM_LOCAL_DISPATCH_ENABLED !== 'true'
+  )
+    return;
   const since = new Date(process.env.TELEGRAM_ALERTS_SINCE ?? '');
   if (
     !process.env.TELEGRAM_BOT_TOKEN ||
@@ -57,12 +72,7 @@ export async function drainTelegram(db: Db, deliver = sendTelegram) {
     .sort({ createdAt: 1 })
     .limit(50)
     .toArray()) {
-    await enqueue({
-      kind: 'callback',
-      id: record._id,
-      event: record.eventType,
-      date: record.eventDate,
-    });
+    await enqueue(callbackAlert(record));
     await callbacks.updateOne(
       { _id: record._id },
       { $set: { telegramQueued: true } },
@@ -77,12 +87,7 @@ export async function drainTelegram(db: Db, deliver = sendTelegram) {
     .sort({ confirmedAt: 1 })
     .limit(50)
     .toArray()) {
-    await enqueue({
-      kind: 'quote',
-      id: record._id,
-      event: record.details.eventType,
-      date: record.details.eventDate,
-    });
+    await enqueue(quoteAlert(record));
     await quotes.updateOne(
       { _id: record._id },
       { $set: { telegramQueued: true } },
@@ -112,20 +117,47 @@ export async function drainTelegram(db: Db, deliver = sendTelegram) {
       .sort({ nextAttempt: 1 })
       .limit(3)
       .toArray();
-    for (const [index, job] of pending.entries()) {
-      if (index) await new Promise((resolve) => setTimeout(resolve, 3100));
+    let delivered = 0;
+    for (const job of pending) {
+      if (delivered >= 3) break;
       if (!job.alert) continue;
       try {
-        await deliver(
-          alertText(
+        if (!job.messages) {
+          // Upgrade previously queued summaries using the saved source record.
+          if (!job.alert.detailLines) {
+            const source =
+              job.alert.kind === 'quote'
+                ? await quotes.findOne({ _id: job.alert.id })
+                : await callbacks.findOne({ _id: job.alert.id });
+            if (!source) throw new Error('Saved request unavailable');
+            job.alert =
+              job.alert.kind === 'quote'
+                ? quoteAlert(source as Enquiry)
+                : callbackAlert(source as CallbackRequest);
+          }
+          job.messages = alertMessages(
             job.alert,
             process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
-          ),
-        );
-        await jobs.updateOne(
-          { _id: job._id },
-          { $set: { sent: true }, $inc: { attempts: 1 } },
-        );
+          );
+          await jobs.updateOne(
+            { _id: job._id },
+            { $set: { messages: job.messages, nextPart: 0 } },
+          );
+        }
+        let part = job.nextPart ?? 0;
+        while (part < job.messages.length && delivered < 3) {
+          if (delivered) await pause(3100);
+          await deliver(job.messages[part]);
+          delivered++;
+          part++;
+          await jobs.updateOne(
+            { _id: job._id },
+            {
+              $set: { nextPart: part, sent: part === job.messages.length },
+              $inc: { attempts: 1 },
+            },
+          );
+        }
       } catch (error) {
         cooldown = Math.max(
           error instanceof TelegramFailure ? error.retryAfter * 1000 : 60000,

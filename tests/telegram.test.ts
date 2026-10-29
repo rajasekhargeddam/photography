@@ -4,7 +4,7 @@ import type { Db } from 'mongodb';
 import { alertText, sendTelegram } from '../src/server/telegram';
 import { drainTelegram } from '../src/server/telegram-queue';
 
-test('Telegram text omits local URLs and formats public admin links without customer contact data', () => {
+test('Telegram text omits local URLs and formats public admin links for legacy alert records', () => {
   const alert = {
     kind: 'quote' as const,
     id: 'request-123',
@@ -69,6 +69,9 @@ test('durable dispatcher ignores drafts and old records, deduplicates concurrent
     callbacks: [
       {
         _id: 'call',
+        name: 'Test Customer',
+        mobile: '9876543210',
+        notes: 'Call after 6 pm',
         eventType: 'Birthday',
         eventDate: '2099-01-01',
         createdAt: '2026-02-01T00:00:00.000Z',
@@ -108,6 +111,8 @@ test('durable dispatcher ignores drafts and old records, deduplicates concurrent
         return structuredClone(row);
       };
       return {
+        findOne: async (filter: Row) =>
+          rows.find((row) => matches(row, filter)) ?? null,
         updateOne: async (filter: Row, change: Row, options?: Row) =>
           update(filter, change, options),
         findOneAndUpdate: async (filter: Row, change: Row) =>
@@ -165,6 +170,65 @@ test('durable dispatcher ignores drafts and old records, deduplicates concurrent
       assert.ok(text.includes('New quote request'));
     });
     assert.equal(attempts, 3);
+    // Simulate a legacy queued summary and hydrate from the saved callback.
+    tables.telegramNotifications.push({
+      _id: 'legacy',
+      alert: { kind: 'callback', id: 'call', event: 'Birthday', date: '' },
+      sent: false,
+      attempts: 0,
+      nextAttempt: new Date(0),
+    });
+    for (const row of tables.telegramNotifications)
+      row.nextAttempt = new Date(0);
+    await drainTelegram(db, async (text) => {
+      assert.ok(text.includes('9876543210'));
+      assert.ok(text.includes('Call after 6 pm'));
+    });
+    const longAlert = {
+      kind: 'quote' as const,
+      id: 'long',
+      event: 'Wedding',
+      date: '',
+      detailLines: ['🌸'.repeat(6500)],
+    };
+    tables.telegramNotifications.push({
+      _id: 'long',
+      alert: longAlert,
+      sent: false,
+      attempts: 0,
+      nextAttempt: new Date(0),
+    });
+    for (const row of tables.telegramNotifications)
+      row.nextAttempt = new Date(0);
+    const received: string[] = [];
+    let calls = 0;
+    await drainTelegram(
+      db,
+      async (text) => {
+        if (++calls === 2) throw new Error('offline');
+        received.push(text);
+      },
+      async () => {},
+    );
+    const longJob = tables.telegramNotifications.find(
+      (row) => row._id === 'long',
+    )!;
+    assert.equal(longJob.nextPart, 1);
+    assert.equal(longJob.sent, false);
+    for (const row of tables.telegramNotifications)
+      row.nextAttempt = new Date(0);
+    await drainTelegram(
+      db,
+      async (text) => {
+        received.push(text);
+      },
+      async () => {},
+    );
+    assert.equal(longJob.sent, true);
+    assert.equal(received.length, 4);
+    assert.equal(new Set(received).size, 4);
+    assert.ok(received[1].includes('part 2/4'));
+    assert.ok(received.every((text) => text.length <= 4096));
   } finally {
     for (const key of [
       'TELEGRAM_BOT_TOKEN',

@@ -14,17 +14,23 @@
     "test": "tsx --test tests/*.test.ts",
     "admin:seed": "tsx --env-file=.env.local scripts/admin-account.ts seed",
     "admin:disable": "tsx --env-file=.env.local scripts/admin-account.ts disable",
-    "admin:reset-password": "tsx --env-file=.env.local scripts/admin-account.ts reset"
+    "admin:reset-password": "tsx --env-file=.env.local scripts/admin-account.ts reset",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare deploy",
+    "cf:login": "wrangler login",
+    "content:publish": "tsx --env-file=.env.local scripts/publish-content.ts"
   },
   "engines": {
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.13",
     "@reduxjs/toolkit": "2.13.0",
     "@tanstack/react-query": "5.104.1",
     "axios": "1.20.0",
     "mongodb": "^6.21.0",
-    "next": "16.3.8",
+    "next": "^16.4.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-redux": "9.3.0",
@@ -37,12 +43,13 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "^16.4.1",
     "eslint-config-prettier": "10.1.8",
     "postcss": "8.5.29",
     "prettier": "3.9.9",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "wrangler": "^4.152.0"
   }
 }

@@ -1,12 +1,7 @@
 'use client';
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
-import { apiClient, getApiError } from '@/lib/api/client';
+import { createContext, useContext, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchPublicJson } from '@/lib/public-data';
 import { pricingSchema, type ServicePrices } from './model';
 const PriceContext = createContext<ServicePrices | null>(null);
 export function useServicePrices() {
@@ -15,21 +10,13 @@ export function useServicePrices() {
   return prices;
 }
 export function PricingProvider({ children }: { children: ReactNode }) {
-  const [prices, setPrices] = useState<ServicePrices | null>(null);
-  const [error, setError] = useState('');
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    apiClient
-      .get('pricing', { signal: controller.signal })
-      .then(({ data }) => {
-        setPrices(pricingSchema.parse(data).prices);
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted) setError(getApiError(error).message);
-      });
-    return () => controller.abort();
-  }, [attempt]);
+  const query = useQuery({
+    queryKey: ['public-pricing'],
+    queryFn: async ({ signal }) =>
+      pricingSchema.parse(await fetchPublicJson('/api/pricing', signal)).prices,
+  });
+  const prices = query.data;
+  const error = query.error?.message;
   if (!prices)
     return (
       <section className="section container" aria-live="polite">
@@ -38,10 +25,7 @@ export function PricingProvider({ children }: { children: ReactNode }) {
             <p role="alert">{error}</p>
             <button
               className="button button--primary"
-              onClick={() => {
-                setError('');
-                setAttempt((value) => value + 1);
-              }}
+              onClick={() => void query.refetch()}
             >
               Retry loading prices
             </button>

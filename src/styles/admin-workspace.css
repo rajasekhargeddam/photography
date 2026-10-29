@@ -149,10 +149,9 @@
   overflow: hidden;
 }
 .admin-workspace .enquiry-row {
-  grid-template-columns: minmax(150px, 1.5fr) minmax(130px, 1.1fr) minmax(
-      95px,
-      0.8fr
-    ) 104px 58px 14px;
+  grid-template-columns:
+    minmax(150px, 1.5fr) minmax(130px, 1.1fr) minmax(95px, 0.8fr)
+    104px 58px 14px;
   padding: 20px;
   gap: 14px;
   font-size: 13px;

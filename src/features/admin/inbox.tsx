@@ -1,12 +1,12 @@
 'use client';
+import { saveReadReceipt } from './query-cache';
 import { uiCopy } from '@/config/copy';
 import { ceremonyName } from '../booking/quote';
 import { QuotePrint, SaveQuotePdf } from '../booking/components/quote-print';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
-  QueryClient,
-  QueryClientProvider,
+  useQueryClient,
   useInfiniteQuery,
   useQuery,
 } from '@tanstack/react-query';
@@ -49,6 +49,7 @@ function ErrorNotice({
   );
 }
 function EnquiryList() {
+  const client = useQueryClient();
   const [filter, setFilter] = useState<Enquiry['status'] | 'ALL' | 'UNREAD'>(
     'CONFIRMED',
   );
@@ -62,18 +63,26 @@ function EnquiryList() {
   const query = useInfiniteQuery({
     queryKey: ['enquiries', filter, term],
     initialPageParam: 0,
-    queryFn: ({ pageParam, signal }) =>
-      fetchEnquiries(
+    queryFn: async ({ pageParam, signal }) => {
+      const records = await fetchEnquiries(
         pageParam,
         signal,
         filter === 'ALL' || filter === 'UNREAD' ? undefined : filter,
         term,
         filter === 'UNREAD',
-      ),
+      );
+      for (const record of records)
+        client.setQueryData(['enquiry', record.id], record);
+      return records;
+    },
     getNextPageParam: (lastPage, _pages, offset) =>
       lastPage.length === 30 ? offset + 30 : undefined,
   });
-  const groups = groupEnquiries(query.data?.pages.flat() ?? []);
+  const groups = groupEnquiries(
+    (query.data?.pages.flat() ?? []).filter(
+      (item) => filter !== 'UNREAD' || item.unread !== false,
+    ),
+  );
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     heading.current?.focus();
@@ -188,7 +197,8 @@ function EnquiryList() {
           <ul className="enquiries">
             {group.enquiries.map((item) => (
               <li key={item.id}>
-                <a
+                <Link
+                  prefetch={false}
                   className={`enquiry-row${item.unread ? ' enquiry-row--unread' : ''}`}
                   href={`/admin/requests/${item.id}`}
                   onClick={(event) => {
@@ -244,7 +254,7 @@ function EnquiryList() {
                   <span className="row-arrow" aria-hidden="true">
                     ↗
                   </span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -255,7 +265,6 @@ function EnquiryList() {
           id={opened}
           onClose={() => {
             setOpened(null);
-            void query.refetch();
           }}
         />
       )}
@@ -301,7 +310,9 @@ function QuoteDrawer({ id, onClose }: { id: string; onClose: () => void }) {
       }}
     >
       <div className="quote-drawer-toolbar">
-        <Link href={`/admin/requests/${id}`}>Open full page ↗</Link>
+        <Link prefetch={false} href={`/admin/requests/${id}`}>
+          Open full page ↗
+        </Link>
         <button autoFocus onClick={onClose} aria-label="Close quote details">
           Close ✕
         </button>
@@ -317,6 +328,7 @@ function EnquiryDetail({
   id: string;
   compact?: boolean;
 }) {
+  const client = useQueryClient();
   const query = useQuery({
     queryKey: ['enquiry', id],
     queryFn: ({ signal }) => fetchEnquiry(id, signal),
@@ -329,25 +341,19 @@ function EnquiryDetail({
   const [readError, setReadError] = useState(false);
   const [readRetry, setReadRetry] = useState(0);
   useEffect(() => {
-    if (!record) return;
-    const controller = new AbortController();
-    void fetch(`/api/admin/enquiries/${encodeURIComponent(id)}/read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        revision: record.revision,
-        status: record.status,
-      }),
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!controller.signal.aborted) setReadError(!response.ok);
+    if (!record || record.unread === false) return;
+    let active = true;
+    void saveReadReceipt(client, record)
+      .then(() => {
+        if (active) setReadError(false);
       })
       .catch(() => {
-        if (!controller.signal.aborted) setReadError(true);
+        if (active) setReadError(true);
       });
-    return () => controller.abort();
-  }, [id, record, readRetry]);
+    return () => {
+      active = false;
+    };
+  }, [id, record, readRetry, client]);
   return (
     <>
       {readError && (
@@ -565,22 +571,5 @@ function EnquiryDetail({
   );
 }
 export function AdminInbox({ id }: { id?: string }) {
-  const [client] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            refetchOnWindowFocus: false,
-            staleTime: 0,
-            gcTime: 0,
-          },
-        },
-      }),
-  );
-  return (
-    <QueryClientProvider client={client}>
-      {id ? <EnquiryDetail id={id} /> : <EnquiryList />}
-    </QueryClientProvider>
-  );
+  return id ? <EnquiryDetail id={id} /> : <EnquiryList />;
 }
