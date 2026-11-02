@@ -6,3 +6,6 @@ out/
 coverage/
 package-lock.json
 next-env.d.ts
+
+.app-command.lock
+.app-build.json

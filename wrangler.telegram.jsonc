@@ -1,0 +1,15 @@
+{
+  "name": "my-dream-photography-lite-telegram",
+  "main": "workers/telegram-retry.ts",
+  "compatibility_date": "2026-10-24",
+  "workers_dev": false,
+  "triggers": {
+    "crons": ["*/5 * * * *"],
+  },
+  "services": [
+    {
+      "binding": "APP",
+      "service": "my-dream-photography-lite",
+    },
+  ],
+}

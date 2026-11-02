@@ -1,25 +1,27 @@
-# Telegram operation
+# Telegram operation in the unified app
 
-The lite app is the active sender. The original retains the same formatting/queue code but returns before dispatch unless TELEGRAM_LOCAL_DISPATCH_ENABLED=true. Keep that flag unset/false while lite operates. The old hosted sender's token was removed during cutover; do not re-enable a second sender.
+Only the **deployed lite mode** sends notifications in normal operation. It requires compiled APP_VARIANT=lite and runtime TELEGRAM_DISPATCH_ENABLED=true. The flag is configured in wrangler.jsonc. Management mode never sends; local dev/start commands and Cloudflare preview force delivery off. The retired TELEGRAM_LOCAL_DISPATCH_ENABLED setting no longer controls delivery.
 
 ## Messages and queue
 
-Confirmed quotes and callback requests are eligible; draft quotes and records before TELEGRAM_ALERTS_SINCE are excluded. Messages include saved customer name/phone, event details, selected services, recorded prices, album preferences and notes where available. Readable sections, India-time timestamps and production admin links help the studio follow up. Never put access tokens or credentials in notifications.
+Confirmed quotes and callbacks are eligible; drafts and records before TELEGRAM_ALERTS_SINCE are excluded. Messages contain saved customer/contact details, selected services, recorded amounts, album preferences and notes, with readable sections and India-time timestamps. Admin links use NEXT_PUBLIC_SITE_URL. Access tokens and secrets are never included.
 
-Messages use plain text. Parts are persisted before sending and nextPart advances after each successful part. Each run sends at most three parts, spaced 3.1 seconds apart, under a shared MongoDB lease. Failed delivery stays queued with backoff. A lost Telegram response/database acknowledgement can cause a duplicate part; delivery is at least once, not exactly once.
+Messages use plain text. The shared telegramNotifications collection persists numbered parts and nextPart progress. Each invocation sends at most three parts, spaced 3.1 seconds apart, under a shared lease. Failed delivery remains queued with backoff. A lost Telegram response/database acknowledgement can cause a duplicate part; delivery is at least once, not exactly once.
 
-The shared telegramNotifications collection contains personal information. Keep its access private; do not dump queue payloads into logs or public endpoints. Preserve the existing activation timestamp and sent-job records during deployments.
+Keep queue contents private, preserve sent-job records and preserve the activation cutoff. Do not clear queues to troubleshoot delivery.
 
-## Triggers and retries
+## Triggers and scheduler
 
-Successful callback/quote-confirmation submissions trigger background delivery. Admin browsing does not. The deployed lite scheduler runs every five minutes through an APP service binding; quiet periods still incur scheduler/service/database work. Backlogs and cooldowns can delay delivery beyond five minutes.
+Successful lite callback/confirmation requests trigger background delivery. Admin browsing does not. The existing my-dream-photography-lite-telegram Worker retries every five minutes using its APP binding. Backlogs and cooldowns can extend delays. The scheduler runs while your laptop is off.
 
-Configure TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_ALERTS_SINCE and NEXT_PUBLIC_SITE_URL on the lite app. Its TELEGRAM_RETRY_SECRET must match the scheduler's secret. The protected POST /api/telegram/retry rejects missing/wrong authorization; missing delivery configuration returns 503. See [deployment setup](deployment.md).
+Set bot token, chat ID, activation cutoff, site URL and retry secret in the lite app's existing secret store. Set the same retry secret in the scheduler's separate store. Disabled delivery returns 503 from the retry endpoint before database work. When enabled, authorization is required and missing delivery settings fail rather than silently reporting success.
 
-npm run telegram:worker is an optional local loop; -- --once processes one batch. Use only an isolated development destination, or an intentional sender cutover. It is not needed on the laptop for hosted delivery. The original's default guard also applies to this local command.
+Run `npm run telegram:scheduler:check` without deployment; deploy scheduler changes with `npm run telegram:scheduler:deploy`. See [deployment setup](deployment.md).
 
-## Troubleshooting
+## Local testing and advanced retry worker
 
-Check bot membership/send permission, the selected chat, configured activation cutoff, matching retry secrets and scheduler errors. Inspect queue status/counts without exposing customer details. Preserve pending jobs and successful part progress; do not clear the queue to fix delivery. Confirm saved source requests exist if legacy pending summaries cannot be hydrated.
+Local web commands never send. However, records written to the live shared database can still be picked up by the hosted scheduler. Use an isolated database and test group for disposable test submissions.
 
-The user previously confirmed the enquiry/admin/Telegram flow works. That confirmation does not replace checking the scheduler after a new release. Routine tests use fake transports and do not send messages to the group.
+The optional `npm run telegram:worker` requires explicit APP_VARIANT=lite and TELEGRAM_DISPATCH_ENABLED=true in its environment, plus the usual database/bot settings. It loads .env.local and must not run against the live shared database alongside the hosted sender. `-- --once` runs one batch. It is unnecessary for day-to-day content management.
+
+Check bot membership/send permissions, chat selection, activation cutoff, matching retry secrets and scheduler errors when diagnosing delivery. Inspect counts/status without logging customer payloads. Routine tests use fake transports and send no real group messages.

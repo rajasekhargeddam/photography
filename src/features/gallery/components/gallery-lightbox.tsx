@@ -41,7 +41,12 @@ function Photo({
       />
       {large && !loaded && (
         <span className="photo-loading" role="status">
-          Loading original photo…
+          <span className="photo-loading-bubbles" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span>Loading image…</span>
         </span>
       )}
     </span>

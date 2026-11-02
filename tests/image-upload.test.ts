@@ -17,6 +17,7 @@ import {
 } from '../src/lib/image-delivery';
 import {
   uploadOriginal,
+  UploadRejected,
   type OriginalUpload,
 } from '../src/features/content/image-upload';
 
@@ -88,6 +89,52 @@ test('direct upload grants reserve ownership and sign only safe original-upload 
   } finally {
     if (old === undefined) delete process.env.CLOUDINARY_URL;
     else process.env.CLOUDINARY_URL = old;
+  }
+});
+
+test('permanent provider rejections are not automatically retried', async () => {
+  const previous = globalThis.XMLHttpRequest;
+  let attempts = 0;
+  class RejectedXHR {
+    upload = {};
+    status = 400;
+    responseText = JSON.stringify({
+      error: { message: 'File size too large. Maximum is 10485760.' },
+    });
+    onload?: () => void;
+    open() {}
+    setRequestHeader() {}
+    send() {
+      attempts++;
+      queueMicrotask(() => this.onload?.());
+    }
+  }
+  globalThis.XMLHttpRequest = RejectedXHR as unknown as typeof XMLHttpRequest;
+  try {
+    await assert.rejects(
+      uploadOriginal(
+        {
+          grant: {
+            id: 'test',
+            url: 'https://api.cloudinary.com/v1_1/test-cloud/image/upload',
+            fields: {},
+          },
+          file: new File(['photo'], 'photo.jpg', { type: 'image/jpeg' }),
+          category: 'Wedding',
+          nextByte: 0,
+          uploadId: 'test',
+          uploaded: false,
+        },
+        new AbortController().signal,
+        () => {},
+      ),
+      UploadRejected,
+    );
+    assert.equal(attempts, 1);
+  } finally {
+    if (previous === undefined)
+      Reflect.deleteProperty(globalThis, 'XMLHttpRequest');
+    else globalThis.XMLHttpRequest = previous;
   }
 });
 

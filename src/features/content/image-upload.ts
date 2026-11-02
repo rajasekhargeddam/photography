@@ -12,6 +12,7 @@ export type OriginalUpload = {
   uploaded: boolean;
 };
 const CHUNK_BYTES = 20 * 1024 * 1024;
+export class UploadRejected extends Error {}
 function sendChunk(
   session: OriginalUpload,
   signal: AbortSignal,
@@ -99,11 +100,18 @@ function sendChunk(
         return;
       }
       if (xhr.status < 200 || xhr.status >= 300) {
+        const permanent =
+          xhr.status >= 400 &&
+          xhr.status < 500 &&
+          ![408, 429].includes(xhr.status);
+        const Failure = permanent ? UploadRejected : Error;
         finish(
-          new Error(
-            result.error?.message
-              ? `Image upload failed: ${result.error.message}`
-              : 'The image service could not accept this photo. Please try again.',
+          new Failure(
+            /file size too large/i.test(result.error?.message ?? '')
+              ? 'The image service rejected this photo’s size. Select a smaller website copy or check the account’s upload limit.'
+              : result.error?.message
+                ? `Image upload failed: ${result.error.message}`
+                : 'The image service could not accept this photo. Please try again.',
           ),
         );
         return;
@@ -120,7 +128,7 @@ function sendChunk(
     xhr.send(body);
   });
 }
-/** Sends the untouched file to the signed image endpoint, not through the app server. */
+/** Sends the selected original or prepared copy directly to the signed image endpoint. */
 export async function uploadOriginal(
   session: OriginalUpload,
   signal: AbortSignal,
@@ -138,7 +146,8 @@ export async function uploadOriginal(
         await sendChunk(session, signal, progress);
         break;
       } catch (error) {
-        if (signal.aborted || attempt >= 2) throw error;
+        if (signal.aborted || error instanceof UploadRejected || attempt >= 2)
+          throw error;
         await new Promise((resolve) =>
           setTimeout(resolve, 500 * (attempt + 1)),
         );

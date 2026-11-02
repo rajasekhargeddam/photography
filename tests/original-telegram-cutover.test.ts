@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import type { Db } from 'mongodb';
 import { drainTelegram } from '../src/server/telegram-queue';
 
-test('original app leaves Telegram delivery to lite unless explicitly enabled', async () => {
-  const previous = process.env.TELEGRAM_LOCAL_DISPATCH_ENABLED;
-  delete process.env.TELEGRAM_LOCAL_DISPATCH_ENABLED;
+test('management mode never accesses the real Telegram queue', async () => {
+  const previous = process.env.APP_VARIANT;
+  process.env.APP_VARIANT = 'management';
   let accessed = false;
   const db = {
     collection() {
@@ -17,8 +17,7 @@ test('original app leaves Telegram delivery to lite unless explicitly enabled', 
     await drainTelegram(db);
     assert.equal(accessed, false);
   } finally {
-    if (previous === undefined)
-      delete process.env.TELEGRAM_LOCAL_DISPATCH_ENABLED;
-    else process.env.TELEGRAM_LOCAL_DISPATCH_ENABLED = previous;
+    if (previous === undefined) delete process.env.APP_VARIANT;
+    else process.env.APP_VARIANT = previous;
   }
 });

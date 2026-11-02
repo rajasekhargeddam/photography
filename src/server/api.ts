@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { managementEnabled, isManagementPath } from '../config/app-variant';
 import { AuthService, SESSION_COOKIE, SESSION_SECONDS } from './auth';
 import type { AuthRepository } from './auth';
 import {
@@ -44,6 +45,8 @@ export function createApi(getServices: () => Promise<Services>) {
       const url = new URL(request.url);
       const path = url.pathname;
       const method = request.method;
+      if (!managementEnabled() && isManagementPath(path))
+        throw new ApiFailure(404, 'Endpoint not found.');
       const contentPath =
         /^\/api\/(admin\/)?content\/(gallery|hero|testimonials|videos)(?:\/([\w-]+))?$/.exec(
           path,

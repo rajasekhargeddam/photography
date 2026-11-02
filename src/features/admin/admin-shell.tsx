@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { LogoutButton } from './logout-button';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { managementEnabled } from '@/config/app-variant';
 
 const links = [
   ['/admin/requests', 'Quote requests', 'Enquiries'],
@@ -51,7 +52,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
         <nav aria-label="Studio navigation">
-          {['Enquiries', 'Content', 'Settings'].map((group) => (
+          {(managementEnabled()
+            ? ['Enquiries', 'Content', 'Settings']
+            : ['Enquiries']
+          ).map((group) => (
             <div className="workspace-nav-group" key={group}>
               <p>{group}</p>
               {links

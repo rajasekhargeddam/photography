@@ -3,29 +3,41 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "telegram:worker": "tsx --env-file=.env.local scripts/telegram-worker.ts",
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "npm run dev:management",
+    "dev:management": "tsx scripts/app.ts dev management",
+    "dev:lite": "tsx scripts/app.ts dev lite",
+    "build": "npm run build:management",
+    "build:management": "tsx scripts/app.ts build management",
+    "build:lite": "tsx scripts/app.ts build lite",
+    "start": "npm run start:management",
+    "start:management": "tsx scripts/app.ts start management",
+    "start:lite": "tsx scripts/app.ts start lite",
+    "preview:lite": "tsx scripts/app.ts preview lite",
+    "deploy:lite": "tsx scripts/app.ts deploy lite",
+    "check:bundle": "tsx scripts/app.ts bundle-check lite",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck": "tsx scripts/app.ts typecheck management",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "tsx --test tests/*.test.ts",
     "admin:seed": "tsx --env-file=.env.local scripts/admin-account.ts seed",
     "admin:disable": "tsx --env-file=.env.local scripts/admin-account.ts disable",
     "admin:reset-password": "tsx --env-file=.env.local scripts/admin-account.ts reset",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare deploy",
+    "content:publish": "tsx --env-file=.env.local scripts/publish-database.ts",
+    "content:publish:remote": "tsx --env-file=.env.local scripts/publish-content.ts",
     "cf:login": "wrangler login",
-    "content:publish": "tsx --env-file=.env.local scripts/publish-content.ts"
+    "cf:build": "npm run build:lite",
+    "cf:preview": "npm run preview:lite",
+    "cf:deploy": "npm run deploy:lite",
+    "telegram:scheduler:check": "wrangler deploy --config wrangler.telegram.jsonc --dry-run",
+    "telegram:scheduler:deploy": "wrangler deploy --config wrangler.telegram.jsonc",
+    "telegram:worker": "tsx --env-file=.env.local scripts/telegram-worker.ts"
   },
   "engines": {
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.13",
+    "@opennextjs/cloudflare": "1.20.14",
     "@reduxjs/toolkit": "2.13.0",
     "@tanstack/react-query": "5.104.1",
     "axios": "1.20.0",
@@ -35,7 +47,7 @@
     "react-dom": "19.3.0",
     "react-redux": "9.3.0",
     "server-only": "^0.0.1",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
@@ -50,6 +62,11 @@
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "6.0.3",
-    "wrangler": "^4.152.0"
+    "wrangler": "4.155.0"
+  },
+  "overrides": {
+    "@node-minify/core": {
+      "glob": "10.5.0"
+    }
   }
 }

@@ -1,5 +1,6 @@
 import type { Db } from 'mongodb';
 import { randomUUID } from 'node:crypto';
+import { telegramEnabled } from './telegram-policy';
 import type { Enquiry } from './enquiries';
 import type { CallbackRequest } from '../features/contact/model';
 import {
@@ -29,12 +30,8 @@ export async function drainTelegram(
   pause = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms)),
 ) {
-  // Delivery remains owned by the lite deployment after the shared-database cutover.
-  if (
-    deliver === sendTelegram &&
-    process.env.TELEGRAM_LOCAL_DISPATCH_ENABLED !== 'true'
-  )
-    return;
+  // Only the explicitly enabled lite runtime owns real delivery.
+  if (deliver === sendTelegram && !telegramEnabled()) return;
   const since = new Date(process.env.TELEGRAM_ALERTS_SINCE ?? '');
   if (
     !process.env.TELEGRAM_BOT_TOKEN ||

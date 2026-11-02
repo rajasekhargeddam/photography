@@ -1,7 +1,12 @@
 import { MongoClient } from 'mongodb';
 import { drainTelegram } from '../src/server/telegram-queue';
+import { telegramEnabled } from '../src/server/telegram-policy';
 
 async function main() {
+  if (!telegramEnabled())
+    throw new Error(
+      'Only an explicitly enabled lite sender may run this worker.',
+    );
   if (
     !process.env.MONGODB_URI ||
     !process.env.TELEGRAM_BOT_TOKEN ||

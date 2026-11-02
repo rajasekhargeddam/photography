@@ -1,61 +1,56 @@
-# Deployment guide
+# Deploying lite from the unified repository
 
-Target Worker: **my-dream-photography**. Config: wrangler.jsonc. Public entrypoint: workers/app.mjs. Existing origin: https://my-dream-photography.ganeshrajasekhar219.workers.dev.
+The supported hosted target is **my-dream-photography-lite** at https://my-dream-photography-lite.ganeshrajasekhar219.workers.dev. Full management runs locally. `wrangler.jsonc` now points to lite; the older full-app Worker is not changed by these commands.
 
-The original has an earlier hosted deployment, but its latest optimization/cleanup changes have not been deployed. Its intended day-to-day role is local content management. Do not deploy it over the lite Worker.
+## Before deployment
 
-## 1. Install and provision
+1. Run `npm ci` with Node.js 22 or newer.
+2. Preserve existing `.env.local`; it supplies the local/shared database and public WhatsApp setting. No sibling project is required.
+3. Stop local app/build/preview processes. Commands share build output and enforce a lock.
+4. Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`.
+5. Authenticate with `npm run cf:login` if required.
 
-Run npm ci with Node.js 22 or newer. Use the existing database for this installation. For a genuinely new database, first run the original app locally with its intended MongoDB configuration and request /api/health to initialize collections/indexes and labelled sample content; provision an admin with npm run admin:seed. Cloudflare requests deliberately skip schema setup. Review new-database initialization before pointing it at any existing production data.
+For a new database only, run management locally and request `/api/health` to initialize indexes and labelled samples, then seed an admin interactively. Cloudflare request handlers skip setup. The existing production database is already provisioned; do not create disposable records there for testing.
 
-## 2. Environment
+## Build and deploy
 
-| Variable                                                    | Where                          | Purpose                                                   |
-| ----------------------------------------------------------- | ------------------------------ | --------------------------------------------------------- |
-| NEXT_PUBLIC_SITE_URL                                        | Build and runtime              | Canonical origin and Telegram admin links                 |
-| NEXT_PUBLIC_WHATSAPP_NUMBER                                 | Build                          | Public number; blank hides the button                     |
-| APP_ORIGIN                                                  | Runtime                        | Exact allowed origin for request checks                   |
-| MONGODB_URI, MONGODB_DATABASE                               | Runtime                        | Shared database connection/name                           |
-| CLOUDINARY_URL                                              | Original runtime only          | Signed uploads and image management                       |
-| CONTENT_PUBLISH_SECRET                                      | Runtime and local operator     | At least 32 characters; authenticated revision publishing |
-| CONTENT_PUBLISH_ORIGIN                                      | Local operator only            | Destination of npm run content:publish                    |
-| TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_ALERTS_SINCE | Lite runtime                   | Active sender and eligible request cutoff                 |
-| TELEGRAM_RETRY_SECRET                                       | Lite app and scheduler runtime | Matching private retry authorization                      |
+`npm run build:lite` builds without deploying. `npm run check:bundle` checks the resulting Worker using Wrangler dry-run. `npm run deploy:lite` always builds fresh, verifies the variant/build ID, and uploads. It cannot upload a management-mode build through this command. Wrangler's custom pre-upload check also rejects bundles whose saved Next config is not lite.
 
-Use Cloudflare secret stores for private runtime values; set one interactively with npx wrangler secret put NAME. The lite scheduler has a separate store: append --config wrangler.telegram.jsonc when setting its TELEGRAM_RETRY_SECRET. Never copy credentials into committed files, NEXT_PUBLIC_ variables or command output. Preserve existing secret values and the Telegram activation cutoff during redeployments.
+The build embeds APP_VARIANT=lite in server and browser code. Changing a runtime variable cannot enable management APIs in that build. A build stamp records variant, Next build ID, canonical origin and Cloudflare packaging. Starting development invalidates that stamp; rebuild before start/preview/deploy.
 
-.env.local is local configuration, not an automatic Worker secret upload. For local Worker preview, use ignored .dev.vars configured for an isolated test environment. No second production Telegram sender should run from preview or the original app.
+The default production canonical origin is the current lite workers.dev URL. For a custom domain, set `LITE_SITE_URL=https://your-domain.example` in the terminal or ignored `.env.local` (no trailing slash). Set runtime `APP_ORIGIN` and `NEXT_PUBLIC_SITE_URL` to the same HTTPS origin in Cloudflare, then rebuild/deploy and verify canonical URLs. Do not use a local origin for production. The launcher preserves the public WhatsApp setting while selecting the proper origin.
 
-## 3. Verify and build
+## Runtime configuration
 
-Run npm test, npm run lint, npm run typecheck and npm run format:check. Set the production origin **before** building, since canonical URLs are embedded in generated pages:
+Existing secrets remain attached to the same Worker name. They are not automatically uploaded from `.env.local`.
 
-```powershell
-$env:NEXT_PUBLIC_SITE_URL = 'https://my-dream-photography.ganeshrajasekhar219.workers.dev'
-# Set NEXT_PUBLIC_WHATSAPP_NUMBER to the intended public value if needed.
-npm run cf:build
-# Optional local Worker preview with isolated runtime configuration:
-npm run cf:preview
-```
+| Value                                                       | Location / purpose                                                         |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- |
+| MONGODB_URI, MONGODB_DATABASE                               | Lite Worker secrets: existing shared database                              |
+| APP_ORIGIN, NEXT_PUBLIC_SITE_URL                            | Lite runtime: exact public HTTPS origin                                    |
+| NEXT_PUBLIC_WHATSAPP_NUMBER                                 | Build environment: optional public button number                           |
+| CONTENT_PUBLISH_SECRET                                      | Lite secret: optional protected publishing endpoint                        |
+| TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_ALERTS_SINCE | Lite secrets: destination and existing activation cutoff                   |
+| TELEGRAM_RETRY_SECRET                                       | Matching secret in app and scheduler stores                                |
+| TELEGRAM_DISPATCH_ENABLED                                   | Non-secret `true` in deployed wrangler.jsonc; local commands force `false` |
+| CLOUDINARY_URL                                              | Local management only; not needed for lite public image reads              |
 
-Use the same origin in runtime APP_ORIGIN and NEXT_PUBLIC_SITE_URL. Confirm the generated sitemap/canonical URLs and WhatsApp button. Restart/rebuild after changing build-time public values. Do not deploy a development-origin build.
+Use `npx wrangler secret put NAME` interactively to set an app secret. Scheduler secrets require `--config wrangler.telegram.jsonc`. Do not rotate existing values or replace them with example placeholders during ordinary redeployments. APP_VARIANT is build-time, not a secret or runtime toggle.
 
-OpenNext warns about Windows support; if packaging requires symbolic links, enable Windows Developer Mode or build in WSL. A sandbox-stalled build is not a successful build.
+## Cloudflare preview
 
-## 4. Deploy
+Build lite, then run `npm run preview:lite`. The command uses local Wrangler preview and forces Telegram off. Use ignored `.dev.vars` for an isolated preview database and `APP_ORIGIN=http://localhost:8787` (or the preview address shown). Never point disposable test submissions at the live shared database: the hosted scheduler can still discover them, even if preview sending is off. `npm run start:lite` is a Node preview on port 3001, not a Cloudflare runtime test.
 
-Authenticate with npm run cf:login if needed. Check the Worker name and self-reference in wrangler.jsonc, then run npm run cf:deploy after the verified build. Secret changes can themselves create a deployment; do not use placeholder secrets on a live Worker.
+OpenNext warns about Windows support. Windows Developer Mode may be needed for symlinks, or build in WSL. Do not count interrupted or sandbox-stalled builds as successful verification.
 
-No scheduler is configured for the original. Leave TELEGRAM_LOCAL_DISPATCH_ENABLED unset/false and do not restore the old hosted Telegram sender while lite owns delivery.
+## Scheduler
 
-## 5. Verify the release
+The existing scheduler remains **my-dream-photography-lite-telegram**, with a five-minute cron and APP binding to lite. Run `npm run telegram:scheduler:check` for a dry-run, then `npm run telegram:scheduler:deploy` only when its code/configuration changes. A normal app deployment does not require redeploying the scheduler. Preserve both copies of TELEGRAM_RETRY_SECRET.
 
-Check public pages and assets, successive public API MISS/HIT responses, admin login/logout, anonymous private API rejection and the appropriate admin feature set. Validate content publishing with an intended edit. Verify request submission and Telegram delivery only with an explicitly intended request; avoid generating customer-looking test records or unsolicited group messages.
+## After deployment and rollback
 
-Inspect Cloudflare CPU/error metrics and scheduler status. The prior lite fast path measured 1–2 ms CPU for hits and 58–665 ms for misses. Cold reads and scrypt login remain CPU risks; successful builds/HTTP responses do not establish free-tier suitability. No paid upgrade is required by this configuration, and no guarantee of zero cost is made.
+Verify public pages/assets, repeated public cache hits, login/logout, 404 responses for management pages/APIs, 401 for anonymous request APIs, and intended request/Telegram delivery. Use actual intended requests or an explicitly authorized isolated test; do not send unsolicited group tests.
 
-Keep the previous deployment version available for rollback. Roll back code through Cloudflare deployment history if needed; do not roll back or delete customer data. Run publishing after content edits rather than deploying unchanged code.
+Review Worker CPU/errors and scheduled execution. Previous lite samples measured 1–2 ms CPU for cache hits and 58–665 ms for misses. Login hashing and cold reads remain risks; free-tier suitability is not established by successful builds. No paid upgrade is introduced here.
 
-## Cleanup verification — 29 October 2026
-
-Both projects passed 78 automated tests each, ESLint, TypeScript, formatting, the OpenNext production build and Wrangler deployment dry-run. Lite scheduler dry-run also passed. Documentation links resolve. No deployment, credential change, customer-data mutation or real Telegram send was performed during cleanup. Live runtime checks remain a post-deployment step; free-tier CPU suitability remains unresolved.
+Keep the previous Cloudflare version for code rollback. Do not delete or roll back customer records. The old sibling folder is retained as a reference, but normal maintenance and deployment now happen in this repository. No live deployment is performed merely by converting the source.

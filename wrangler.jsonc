@@ -1,10 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "my-dream-photography",
+  "name": "my-dream-photography-lite",
   "main": "workers/app.mjs",
   "compatibility_date": "2026-10-24",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
+  "vars": {
+    "TELEGRAM_DISPATCH_ENABLED": "true",
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
@@ -12,7 +15,10 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "my-dream-photography",
+      "service": "my-dream-photography-lite",
     },
   ],
+  "build": {
+    "command": "node --import tsx scripts/verify-lite-build.ts",
+  },
 }

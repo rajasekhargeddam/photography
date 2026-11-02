@@ -4,6 +4,7 @@ import { publicRevision } from '@/server/public-revision';
 import { withPublicCache } from '@/server/public-cache';
 import { after } from 'next/server';
 import { createNotificationTrigger } from '@/server/notification-trigger';
+import { telegramEnabled } from '@/server/telegram-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,10 @@ async function handler(request: Request) {
     ),
   );
   const path = new URL(request.url).pathname;
-  if (shouldCheckNotifications(request.method, path, response.ok)) {
+  if (
+    telegramEnabled() &&
+    shouldCheckNotifications(request.method, path, response.ok)
+  ) {
     after(async () => {
       try {
         await withDatabase(async (getDatabase) =>

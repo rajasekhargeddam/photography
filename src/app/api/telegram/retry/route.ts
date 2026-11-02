@@ -1,11 +1,20 @@
 import { timingSafeEqual } from 'node:crypto';
 import { withDatabase } from '@/server/database';
+import { telegramEnabled } from '@/server/telegram-policy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  if (!telegramEnabled())
+    return Response.json(
+      { error: 'Telegram delivery is disabled' },
+      {
+        status: 503,
+        headers: { 'Cache-Control': 'private, no-store' },
+      },
+    );
   const secret = process.env.TELEGRAM_RETRY_SECRET;
   const provided = Buffer.from(request.headers.get('authorization') ?? '');
   const expected = Buffer.from(`Bearer ${secret ?? ''}`);

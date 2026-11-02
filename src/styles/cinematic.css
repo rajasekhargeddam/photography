@@ -2417,6 +2417,9 @@
   background: #171715;
   color: #bab5ab;
 }
+.cinematic-site .photo-loading-bubbles {
+  color: #d1b291;
+}
 .cinematic-site .studio-manifesto {
   padding-block: clamp(2.5rem, 5vw, 4.5rem);
 }

@@ -1,21 +1,72 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { categories } from '../content/model';
 import {
   uploadOriginal,
+  UploadRejected,
   type OriginalUpload,
   type UploadGrant,
 } from '../content/image-upload';
 import { runUploadQueue } from '../content/upload-queue';
+import { prepareImage, type PreparedImage } from '../content/prepare-image';
 
 type Entry = {
   id: string;
   file: File;
-  status: 'queued' | 'uploading' | 'verifying' | 'saved' | 'failed' | 'paused';
+  status:
+    | 'queued'
+    | 'preparing'
+    | 'uploading'
+    | 'verifying'
+    | 'saved'
+    | 'failed'
+    | 'paused';
   progress: number;
   message?: string;
   session?: OriginalUpload;
+  prepared?: PreparedImage;
+  previewUrl?: string;
 };
+
+function PreparedPreview({
+  prepared,
+  original,
+  url,
+}: {
+  prepared: PreparedImage;
+  original: File;
+  url?: string;
+}) {
+  const size = (bytes: number) => (bytes / 1024 / 1024).toFixed(1) + ' MiB';
+  return (
+    <div>
+      <p>
+        {prepared.optimized
+          ? `Website copy: ${size(original.size)} → ${size(prepared.file.size)} · ${prepared.width} × ${prepared.height} px. Your original stays unchanged on your device.`
+          : `Uploading original · ${size(original.size)} (no preparation needed).`}
+      </p>
+      {url && (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Preview website copy of ${original.name}`}
+        >
+          <Image
+            src={url}
+            alt={`Website copy of ${original.name}`}
+            width={160}
+            height={120}
+            unoptimized
+            style={{ objectFit: 'contain' }}
+          />
+          <span>Preview website copy</span>
+        </a>
+      )}
+    </div>
+  );
+}
 type Props = {
   kind: 'gallery' | 'hero';
   available: number;
@@ -36,11 +87,25 @@ export function PhotoBatchUpload({
 }: Props) {
   const queue = useRef<Entry[]>([]);
   const abort = useRef<AbortController | null>(null);
+  const previewUrls = useRef(new Set<string>());
   const [entries, setEntries] = useState<Entry[]>([]);
   const [category, setCategory] = useState<string>(categories[0]);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState('');
-  useEffect(() => () => abort.current?.abort(), []);
+  useEffect(() => {
+    const urls = previewUrls.current;
+    return () => {
+      abort.current?.abort();
+      urls.forEach((url) => URL.revokeObjectURL(url));
+      urls.clear();
+    };
+  }, []);
+  function releasePreview(entry: Entry) {
+    if (entry.previewUrl) {
+      URL.revokeObjectURL(entry.previewUrl);
+      previewUrls.current.delete(entry.previewUrl);
+    }
+  }
   function refresh() {
     setEntries(queue.current.map((entry) => ({ ...entry })));
   }
@@ -52,6 +117,7 @@ export function PhotoBatchUpload({
     onBusy(true);
     setMessage('');
     const endpoint = '/api/admin/content/' + kind;
+    let preparing: Promise<unknown> = Promise.resolve();
     try {
       await runUploadQueue(
         queue.current,
@@ -65,8 +131,23 @@ export function PhotoBatchUpload({
               )
             )
               throw new Error('Choose a non-empty JPEG, PNG or WebP photo.');
-            entry.status = 'uploading';
+            entry.status = 'preparing';
             entry.message = undefined;
+            refresh();
+            if (!entry.prepared) {
+              const work = preparing.then(() =>
+                prepareImage(entry.file, controller.signal),
+              );
+              preparing = work.catch(() => undefined);
+              entry.prepared = await work;
+              if (entry.prepared.optimized && !controller.signal.aborted) {
+                entry.previewUrl = URL.createObjectURL(entry.prepared.file);
+                previewUrls.current.add(entry.previewUrl);
+              }
+            }
+            if (controller.signal.aborted)
+              throw new Error('Upload paused. Retry to continue.');
+            entry.status = 'uploading';
             refresh();
             if (!entry.session) {
               const photoCategory = kind === 'hero' ? 'Others' : category;
@@ -83,7 +164,7 @@ export function PhotoBatchUpload({
               });
               entry.session = {
                 grant,
-                file: entry.file,
+                file: entry.prepared.file,
                 category: photoCategory,
                 nextByte: 0,
                 uploadId: crypto.randomUUID(),
@@ -91,6 +172,14 @@ export function PhotoBatchUpload({
               };
             }
             const session = entry.session;
+            // A failed selection can survive a development hot reload from the old uploader.
+            // Reuse its reservation, but never resend the oversized original in that session.
+            if (!session.uploaded && session.file !== entry.prepared.file) {
+              session.file = entry.prepared.file;
+              session.nextByte = 0;
+              session.uploadId = crypto.randomUUID();
+              entry.progress = 0;
+            }
             if (!session.uploaded) {
               try {
                 await uploadOriginal(session, controller.signal, (progress) => {
@@ -98,7 +187,11 @@ export function PhotoBatchUpload({
                   refresh();
                 });
               } catch (uploadError) {
-                if (controller.signal.aborted) throw uploadError;
+                if (
+                  controller.signal.aborted ||
+                  uploadError instanceof UploadRejected
+                )
+                  throw uploadError;
                 // A lost final response must not cause a second copy of the original.
                 try {
                   await request(endpoint + '/' + session.grant.id, {
@@ -149,10 +242,15 @@ export function PhotoBatchUpload({
       setMessage(
         `${saved} of ${queue.current.length} photos saved.${saved < queue.current.length ? ' Retry unfinished photos below; saved photos will be skipped.' : ''}`,
       );
-      await onComplete();
-      abort.current = null;
-      setRunning(false);
-      onBusy(false);
+      try {
+        await onComplete();
+      } catch (error) {
+        onError(error);
+      } finally {
+        abort.current = null;
+        setRunning(false);
+        onBusy(false);
+      }
     }
   }
   const unfinished = entries.some((entry) => entry.status !== 'saved');
@@ -199,6 +297,7 @@ export function PhotoBatchUpload({
                 );
                 return;
               }
+              queue.current.forEach(releasePreview);
               queue.current = files.map((file) => ({
                 id: crypto.randomUUID(),
                 file,
@@ -211,8 +310,10 @@ export function PhotoBatchUpload({
           />
         </label>
         <small>
-          Choose multiple JPEG, PNG or WebP photos. Originals are preserved. Two
-          photos upload at a time; image-service account limits apply.
+          Choose JPEG, PNG or WebP photos. Large photos become high-quality
+          website copies below 9 MiB before upload; your local originals stay
+          untouched. Website copies may have reduced dimensions and do not
+          retain original metadata. Two photos upload at a time.
         </small>
         {kind === 'gallery' && (
           <label>
@@ -257,6 +358,7 @@ export function PhotoBatchUpload({
               const pending = queue.current.some(
                 (entry) => entry.session && entry.status !== 'saved',
               );
+              queue.current.forEach(releasePreview);
               queue.current = [];
               refresh();
               setMessage(
@@ -285,15 +387,17 @@ export function PhotoBatchUpload({
                 <span>
                   {entry.status === 'saved'
                     ? 'Saved'
-                    : entry.status === 'verifying'
-                      ? 'Verifying…'
-                      : entry.status === 'uploading'
-                        ? `Uploading · ${entry.progress}%`
-                        : entry.status === 'failed'
-                          ? 'Failed'
-                          : entry.status === 'paused'
-                            ? 'Paused'
-                            : 'Queued'}
+                    : entry.status === 'preparing'
+                      ? 'Preparing website copy…'
+                      : entry.status === 'verifying'
+                        ? 'Saving…'
+                        : entry.status === 'uploading'
+                          ? `Uploading · ${entry.progress}%`
+                          : entry.status === 'failed'
+                            ? 'Failed'
+                            : entry.status === 'paused'
+                              ? 'Paused'
+                              : 'Queued'}
                 </span>
               </div>
               <progress
@@ -302,11 +406,19 @@ export function PhotoBatchUpload({
                 max={100}
               />
               {entry.message && <p>{entry.message}</p>}
+              {entry.prepared && (
+                <PreparedPreview
+                  prepared={entry.prepared}
+                  original={entry.file}
+                  url={entry.previewUrl}
+                />
+              )}
               {!running && !entry.session && entry.status !== 'saved' && (
                 <button
                   type="button"
                   disabled={disabled}
                   onClick={() => {
+                    releasePreview(entry);
                     queue.current = queue.current.filter(
                       (item) => item.id !== entry.id,
                     );

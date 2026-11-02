@@ -14,3 +14,6 @@ Thumbs.db
 .open-next/
 .wrangler/
 .dev.vars*
+
+.app-command.lock
+.app-build.json

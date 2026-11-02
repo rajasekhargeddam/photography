@@ -1,2 +1,2 @@
-export { default } from '../requests/layout';
+export { default } from '../content/layout';
 export const dynamic = 'force-dynamic';
