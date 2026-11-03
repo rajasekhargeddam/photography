@@ -1,7 +1,6 @@
 import { parseVariant, type AppVariant } from '../src/config/app-variant';
 
 export const liteWorker = 'my-dream-photography-lite';
-export const defaultLiteOrigin = `https://${liteWorker}.ganeshrajasekhar219.workers.dev`;
 
 export function commandOptions(
   args: string[],
@@ -16,7 +15,7 @@ export function commandOptions(
       'build',
       'start',
       'preview',
-      'deploy',
+      'upload',
       'bundle-check',
       'typecheck',
     ].includes(action)
@@ -24,10 +23,10 @@ export function commandOptions(
     throw new Error('Use a documented npm command from README.md.');
   if (
     variant !== 'lite' &&
-    ['preview', 'deploy', 'bundle-check'].includes(action)
+    ['preview', 'upload', 'bundle-check'].includes(action)
   )
     throw new Error(
-      'Cloudflare commands deploy lite only. Management runs locally.',
+      'Cloudflare commands support lite only. Management runs locally.',
     );
   let port = variant === 'lite' ? 3001 : 3000;
   if (extra.length) {
@@ -44,9 +43,11 @@ export function commandOptions(
   }
   const local =
     ['dev', 'start', 'typecheck'].includes(action) || variant === 'management';
+  if (!local && !environment.LITE_SITE_URL)
+    throw new Error('Set LITE_SITE_URL to the company HTTPS website origin.');
   const origin = local
     ? `http://localhost:${port}`
-    : environment.LITE_SITE_URL || defaultLiteOrigin;
+    : environment.LITE_SITE_URL!;
   const url = new URL(origin);
   if (
     url.origin !== origin ||

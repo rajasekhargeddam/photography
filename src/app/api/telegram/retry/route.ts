@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { withDatabase } from '@/server/database';
 import { telegramEnabled } from '@/server/telegram-policy';
+import { reportFailure } from '@/server/diagnostics';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,7 +39,8 @@ export async function POST(request: Request) {
       (await getDatabase()).drainTelegram(),
     );
     return Response.json({ ok: true });
-  } catch {
+  } catch (error) {
+    reportFailure(error, 'telegram-retry');
     return Response.json({ error: 'Retry unavailable' }, { status: 503 });
   }
 }

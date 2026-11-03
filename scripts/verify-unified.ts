@@ -47,6 +47,7 @@ async function main() {
           ...process.env,
           MONGODB_DATABASE: name,
           APP_ORIGIN: origin,
+          TELEGRAM_DISPATCH_ENABLED: 'false',
           NODE_ENV: 'production',
         },
         windowsHide: true,
@@ -157,9 +158,11 @@ async function main() {
     for (const path of ['/portfolio', '/testimonials', '/contact'])
       assert.equal((await call(path)).status, 200);
     const homeMarkup = await (await call('/')).text();
-    assert.ok(
-      homeMarkup.includes('BOOK YOUR DATE') &&
-        homeMarkup.includes('BUILD YOUR QUOTE'),
+    assert.match(homeMarkup, /href="\/book"/, 'Homepage links to booking');
+    assert.match(
+      homeMarkup,
+      /Build your quote/i,
+      'Homepage exposes the quote action',
     );
     assert.ok(
       !homeMarkup.includes('services-title') &&
@@ -489,7 +492,7 @@ main().catch((error) => {
     error?.name,
     error?.code,
     error?.cause?.code,
-    error?.name === 'AssertionError' ? error.message : '(credentials omitted)',
+    error?.name === 'AssertionError' ? error.stack : '(credentials omitted)',
   );
   process.exitCode = 1;
 });

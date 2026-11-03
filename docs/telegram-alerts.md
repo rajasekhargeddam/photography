@@ -12,11 +12,11 @@ Keep queue contents private, preserve sent-job records and preserve the activati
 
 ## Triggers and scheduler
 
-Successful lite callback/confirmation requests trigger background delivery. Admin browsing does not. The existing my-dream-photography-lite-telegram Worker retries every five minutes using its APP binding. Backlogs and cooldowns can extend delays. The scheduler runs while your laptop is off.
+Successful lite callback/confirmation requests trigger background delivery. Admin browsing does not. The existing my-dream-photography-lite-telegram Worker retries every 15 minutes using its APP binding. Backlogs and cooldowns can extend delays. The scheduler runs while your laptop is off.
 
 Set bot token, chat ID, activation cutoff, site URL and retry secret in the lite app's existing secret store. Set the same retry secret in the scheduler's separate store. Disabled delivery returns 503 from the retry endpoint before database work. When enabled, authorization is required and missing delivery settings fail rather than silently reporting success.
 
-Run `npm run telegram:scheduler:check` without deployment; deploy scheduler changes with `npm run telegram:scheduler:deploy`. See [deployment setup](deployment.md).
+Run `npm run telegram:scheduler:check` without deployment; upload scheduler versions through Cloudflare Builds with `npm run telegram:scheduler:upload`, then promote them in the dashboard. Configure the 15-minute Cron Trigger separately in Cloudflare. See [deployment setup](deployment.md).
 
 ## Local testing and advanced retry worker
 

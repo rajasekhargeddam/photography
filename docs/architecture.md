@@ -14,7 +14,7 @@ Telegram requires both the compiled lite mode and TELEGRAM_DISPATCH_ENABLED=true
 
 `scripts/app.ts` loads shared local settings, selects a validated mode/origin, and launches tools without shell interpolation. It rejects arbitrary option passthrough. Dev/start allow an explicit --port and update local origin checks accordingly.
 
-Commands share `.next` and `.open-next`; a PID lock enforces one app/build/preview/typecheck command at a time. Builds write `.app-build.json` only on success. Start/preview verify the expected mode and build ID. Deploy always rebuilds lite. Wrangler independently checks the stamp and built Next config before upload. OpenNext invokes Next directly to avoid recursive launcher calls.
+Commands share `.next` and `.open-next`; a PID lock enforces one app/build/preview/typecheck command at a time. Builds write `.app-build.json` only on success. Start/preview verify the expected mode and build ID. Cloudflare Builds builds lite, then uploads an inactive version for manual promotion. Wrangler independently checks the stamp and built Next config before upload. OpenNext invokes Next directly to avoid recursive launcher calls.
 
 This deliberately favors a simple single-repository workflow over simultaneous management/lite servers. Stop one mode before switching; use separate browser profiles when checking sessions because cookies are not isolated by port.
 
@@ -34,5 +34,23 @@ Cloudflare Mongo connections are request-scoped; local Node uses pooling. Schema
 - workers: app cache entrypoint and hosted retry scheduler.
 - scripts: mode launcher and operator commands.
 - tests: isolated coverage of shared behavior, both mode policies and command/build guards.
+
+The API entrypoint keeps origin checks, mode restrictions and route recognition together. Authenticated admin operations live in `src/server/admin-api.ts`; authentication remains inside that handler. `api-services.ts` defines the injected service contract used by both handlers and tests.
+
+Admin content loading and mutations live in `use-content-manager.ts`, while `content-manager.tsx` renders the controls. The inbox composes separate list, detail/drawer and notice components. Keep booking calculations in the existing pure quote/model modules rather than moving pricing into UI components.
+
+## Diagnostics
+
+Unexpected API failures return a generic 503 with a `requestId` and `X-Request-ID`. Search server/Cloudflare logs for that ID to find the fixed failure category. `database-authentication` indicates rejected credentials; `database-permission` indicates insufficient privileges; connectivity/network categories indicate a connection failure requiring investigation, not proof of an IP allowlist problem. `unexpected` needs reproduction in an isolated development environment.
+
+Diagnostics deliberately omit error messages, stack traces, connection strings, request bodies, query parameters and customer records. Expected validation/authentication failures keep their ordinary status without error logging. Content publishing and Telegram retries log their operation and category too.
+
+## Repeatable integration verification
+
+Run `npm run check:integration` with the app stopped and `.env.local` configured. This builds management mode, creates a random `qa_` database on the configured MongoDB cluster, exercises real HTTP requests, and drops only that temporary database in cleanup. The database user needs permission to create and drop that database. Telegram delivery is explicitly disabled. The ordinary check does not upload or delete Cloudinary assets.
+
+For interactive browser verification after a management build, run `npx tsx --env-file=.env.local scripts/verify-unified.ts --browser`. It keeps the isolated server at `http://localhost:3100` open after the integration checks; press Enter in that terminal when finished to clean up. Synthetic credentials are defined in that script, never use this account in production.
+
+Check sign-in, quote drawer/full detail, portfolio category filtering, quote event selection/back navigation, and mobile layout. The browser pass is manual; it is not implied by the unit-test count. Rebuild lite afterward before Cloudflare bundle checks. Production secrets, cron execution and real network performance require post-deployment verification in `deployment.md`.
 
 The optional `scripts/verify-unified.ts` belongs to full management integration testing and creates an isolated QA database. Its --cloudinary mode creates/deletes real assets and is not run as part of ordinary deployment checks. Ignored secrets, legacy private backups and customer media are never cleanup targets.

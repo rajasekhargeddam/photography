@@ -97,6 +97,15 @@ test('commands fix local origins, restrict deploy targets and reject unsafe pass
     'http://localhost:3100',
   );
   assert.throws(() => commandOptions(['deploy', 'management'], {}));
+  assert.throws(() => commandOptions(['deploy', 'lite'], {}));
+  assert.throws(() => commandOptions(['upload', 'management'], {}));
+  assert.throws(() => commandOptions(['build', 'lite'], {}));
+  assert.throws(() => commandOptions(['upload', 'lite'], {}));
+  assert.equal(
+    commandOptions(['upload', 'lite'], { LITE_SITE_URL: 'https://company.in' })
+      .origin,
+    'https://company.in',
+  );
   assert.throws(() => commandOptions(['build', 'lite', '--skipNextBuild'], {}));
   assert.throws(() => commandOptions(['dev', 'lite', '--port', '99999'], {}));
   for (const value of [

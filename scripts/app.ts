@@ -149,12 +149,9 @@ async function main() {
     );
   }
   if (action === 'build') return build();
-  if (action === 'deploy') {
-    await build();
-    verify();
-    return run('cloudflare', ['deploy', '--config', 'wrangler.jsonc'], env);
-  }
   verify();
+  if (action === 'upload')
+    return run('cloudflare', ['upload', '--config', 'wrangler.jsonc'], env);
   if (action === 'start')
     return run('next', ['start', '--port', String(port)], env);
   if (action === 'preview')

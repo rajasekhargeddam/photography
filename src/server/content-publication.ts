@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { Collection } from 'mongodb';
 import { json } from './http';
+import { reportFailure } from './diagnostics';
 export type PublicationRecord = {
   _id: string;
   revision: number;
@@ -50,7 +51,8 @@ export async function publishContent(
       edgeRefreshSeconds: 60,
       browserRefreshRequired: true,
     });
-  } catch {
+  } catch (error) {
+    reportFailure(error, 'content-publish');
     return json({ message: 'Publishing unavailable. Retry the command.' }, 503);
   }
 }

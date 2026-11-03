@@ -15,10 +15,10 @@ This guide describes the checked-out project. It does not certify the live websi
 | MongoDB                   | Stores application records                     | Customer requests, content, pricing, accounts and notification state |
 | Cloudinary                | Stores uploaded media                          | Images, original files and asset identifiers                         |
 | Local management app      | Edits content and pricing                      | Laptop security and management credentials                           |
-| Telegram scheduler Worker | Retries notifications every five minutes       | Matching retry secret, app binding and queue state                   |
+| Telegram scheduler Worker | Retries notifications every 15 minutes         | Matching retry secret, app binding and queue state                   |
 | Domain registrar/DNS      | Connects the company address to hosting        | Ownership, renewal, DNS and recovery access                          |
 
-The app Worker is `my-dream-photography-lite`. The scheduler is `my-dream-photography-lite-telegram`. The configured default website is [the lite Worker](https://my-dream-photography-lite.ganeshrajasekhar219.workers.dev).
+The app Worker is `my-dream-photography-lite`. The scheduler is `my-dream-photography-lite-telegram`. Set the company website origin explicitly in Cloudflare build variables.
 
 Management runs on your laptop; the hosted public website and scheduler continue running when your laptop is off. Hosted lite deliberately blocks content and pricing management. This application requires a server and database; GitHub Pages is not the deployment target.
 
@@ -51,7 +51,7 @@ GitHub itself stores code. Connected hosting integrations and workflows are what
 4. Record the active Cloudflare version ID and time. Push a harmless documentation change. Check build history, deployment history and GitHub Actions: no deploy job or new app/scheduler version should appear after the provider has processed the push.
 5. Repeat this check whenever someone changes hosting integrations.
 
-Your deployment button is the terminal command `npm run deploy:lite`. Only run it when you intend to change production.
+Your release button is Cloudflare **Deployments → Promote deployment**. Follow [the current deployment guide](deployment.md).
 
 If you later want a GitHub “Run workflow” button, build a separate manual-only `workflow_dispatch` workflow with restricted production credentials and release checks. That is optional future work; it is not installed by this guide.
 
@@ -150,7 +150,7 @@ git status --short
 npm ci
 ```
 
-Record the SHA. Do not change source files after validation. The deploy command builds the **local checkout**, not whatever happens to be on GitHub at that moment.
+Record the SHA. Do not change source files after validation. Cloudflare builds the GitHub commit shown in its build record. Local checks validate only your local checkout.
 
 Stop any dev/start/preview process with Ctrl+C. The project shares build directories and allows only one app/build/preview/typecheck command at a time.
 
@@ -169,22 +169,7 @@ Use `npm run preview:lite` with isolated `.dev.vars` for a local Worker-runtime 
 
 ### E. Release intentionally
 
-Before deployment, record the previous Cloudflare version, verify a recent recoverable backup, and tell the company when the release is happening. Prefer business hours when you can watch the result.
-
-```powershell
-npm run deploy:lite
-```
-
-This rebuilds, validates and deploys to the existing lite Worker. Plain `npm run build` builds management mode and is not the production release command.
-
-Only for initial scheduler setup or a scheduler code/configuration change:
-
-```powershell
-npm run telegram:scheduler:check
-npm run telegram:scheduler:deploy
-```
-
-If changing domains, first attach the intended custom domain to the correct Worker and confirm DNS/TLS. Set `LITE_SITE_URL` for the build and matching runtime origins, then rebuild/deploy. Check canonical URLs, sitemap, admin links and HTTPS. Preserve existing DNS mail records. Follow [the SEO checklist](seo-launch.md).
+Follow [GitHub-connected Cloudflare deployment](deployment.md). Push the chosen commit, wait for its inactive version upload, then promote that version in Cloudflare. Deploy the website before activating the scheduler. Set the scheduler cron separately to `*/15 * * * *`; version uploads do not apply trigger changes.
 
 ### F. Verify the live result
 

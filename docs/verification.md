@@ -1,4 +1,17 @@
-# Unified-mode verification — 29 October 2026
+# Verification record
+
+## Maintenance phases — 3 November 2026
+
+- Added safe diagnostic categories and correlation IDs for unexpected API failures; tests confirm raw credential-bearing error messages are not returned or logged.
+- Separated authenticated admin API handling, content-manager state/mutations, and inbox list/detail/notice components while preserving existing behavior.
+- Corrected the outdated architecture deployment statement and an integration assertion tied to retired homepage wording.
+- All 88 tests, lint, type checks and formatting passed. Management and lite production builds passed; lite and Telegram Worker dry runs passed. The lite validation build used the temporary origin `https://example.in`, not a production domain; Cloudflare must build with the real `LITE_SITE_URL`.
+- Real Next.js/MongoDB integration passed: synthetic admin login, authorization, callback persistence and throttling, content operations, quote save/edit/retry/confirm, recorded totals and logout. Temporary QA databases were removed; studio records were not modified.
+- Browser checks passed for synthetic admin login, quote drawer rendering, portfolio category filtering, and lite booking event selection, required-coverage validation, running total, contact dialog and back navigation. No real booking was submitted in the studio database.
+- Added `npm run check:integration` and documented interactive browser QA. Browser checks remain manual; a full mobile/accessibility audit and production load testing were not performed.
+- No push, deployment, real Telegram delivery or live Cloudinary upload was performed. Verify company runtime secrets, cron execution and real Cloudflare resource usage after deployment; local checks cannot certify those settings.
+
+## Unified-mode verification — 29 October 2026
 
 ## Dependency and release checks — 30 October 2026
 

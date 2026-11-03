@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ApiFailure } from './enquiries';
+import { reportFailure } from './diagnostics';
 
 export function json(value: unknown, status = 200, headers?: HeadersInit) {
   const result = new Headers(headers);
@@ -11,14 +12,18 @@ export async function guarded(work: () => Promise<Response>) {
   try {
     return await work();
   } catch (error) {
+    const requestId =
+      error instanceof ApiFailure ? undefined : reportFailure(error, 'api');
     return json(
       {
+        ...(requestId ? { requestId } : {}),
         message:
           error instanceof ApiFailure
             ? error.message
             : 'The service is unavailable. Please retry.',
       },
       error instanceof ApiFailure ? error.status : 503,
+      requestId ? { 'X-Request-ID': requestId } : undefined,
     );
   }
 }
