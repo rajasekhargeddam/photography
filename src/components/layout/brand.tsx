@@ -6,6 +6,7 @@ export function Brand({ showLocation = true }: { showLocation?: boolean }) {
       <span className="brand-logo">
         <Image
           src="/images/brand/my-dream-photography.png"
+          unoptimized
           alt="My Dream Photography"
           width={2592}
           height={2592}

@@ -43,6 +43,7 @@ export default function Page() {
           <div className="founder-photo">
             <Image
               src="/images/founder/raheem-portrait.jpeg"
+              unoptimized
               alt="Raheem, founder of My Dream Photography, smiling behind his camera"
               fill
               sizes="(max-width: 700px) 90vw, 45vw"
@@ -105,6 +106,7 @@ export default function Page() {
           <div className="founder-photo">
             <Image
               src="/images/founder/raheem-at-work.jpeg"
+              unoptimized
               alt="Raheem photographing a celebration with his camera"
               fill
               sizes="(max-width: 700px) 90vw, 45vw"

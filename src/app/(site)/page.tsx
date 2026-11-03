@@ -120,6 +120,7 @@ export default function HomePage() {
           <div className="studio-photo depth-frame">
             <Image
               src="/images/founder/raheem-portrait.jpeg"
+              unoptimized
               alt="Raheem, founder and lead photographer of My Dream Photography"
               fill
               sizes="(max-width: 700px) 90vw, 35vw"
