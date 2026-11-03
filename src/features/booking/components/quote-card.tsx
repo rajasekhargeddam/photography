@@ -65,6 +65,7 @@ export function QuoteCard({
         ) : image ? (
           <Image
             src={image}
+            unoptimized={image.startsWith('/')}
             alt=""
             fill
             sizes="(max-width:600px) 80vw, 260px"

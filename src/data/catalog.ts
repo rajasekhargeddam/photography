@@ -14,7 +14,7 @@ export const services: StudioService[] = [
     tagline: 'Every promise. Every feeling.',
     description:
       'From the quiet anticipation to the grand celebration, we preserve every emotion, tradition, and beautiful moment through timeless photography and cinematic films.',
-    image: null,
+    image: serviceImages.wedding,
   },
   {
     id: 'pre-wedding',
@@ -30,7 +30,7 @@ export const services: StudioService[] = [
     tagline: 'The beginning of forever.',
     description:
       'The happy nerves, the exchanged rings, the people cheering you on. We capture the love and joy of this unforgettable beginning.',
-    image: null,
+    image: serviceImages.engagement,
   },
   {
     id: 'half-saree',
@@ -46,7 +46,15 @@ export const services: StudioService[] = [
     tagline: 'Another year. A thousand smiles.',
     description:
       'From first birthdays to milestone celebrations, we capture every smile, surprise, and joyful moment in photographs and cinematic highlights.',
-    image: null,
+    image: serviceImages.birthday,
+  },
+  {
+    id: 'maternity',
+    name: 'Maternity',
+    tagline: 'A new life. A beautiful beginning.',
+    description:
+      'Thoughtful, relaxed portraits that celebrate your pregnancy and the anticipation of welcoming your little one.',
+    image: serviceImages.maternity,
   },
   {
     id: 'newborn',

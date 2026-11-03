@@ -103,7 +103,7 @@ export const eventCards = [
     event: 'Marriage',
     label: 'Wedding',
     description: 'Your ceremony and the celebrations around it.',
-    image: null,
+    image: serviceImages.wedding,
   },
   {
     event: 'Pre-Wedding',
@@ -115,19 +115,19 @@ export const eventCards = [
     event: 'Engagement',
     label: 'Engagement',
     description: 'Celebrate the start of your next chapter.',
-    image: null,
+    image: serviceImages.engagement,
   },
   {
     event: 'Birthday',
     label: 'Birthday / Pre-Birthday',
     description: 'Milestones, family and celebrations.',
-    image: serviceImages.kids,
+    image: serviceImages.birthday,
   },
   {
     event: 'Maternity',
     label: 'Maternity',
     description: 'Portraits of a growing family.',
-    image: null,
+    image: serviceImages.maternity,
   },
   {
     event: 'Other',

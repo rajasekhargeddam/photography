@@ -32,7 +32,7 @@ export default function Page() {
               storytelling in Narsipatnam and Visakhapatnam (Vizag).
             </p>
             <span className="services-intro-note">
-              Seven ways to tell your story.
+              Eight ways to tell your story.
             </span>
           </div>
         </Container>
@@ -53,6 +53,7 @@ export default function Page() {
                 {service.image ? (
                   <Image
                     src={service.image}
+                    unoptimized={service.image.startsWith('/')}
                     alt={`${service.name} photography by My Dream Photography`}
                     fill
                     sizes="(max-width: 700px) 90vw, 500px"
