@@ -34,7 +34,7 @@ The fields called **Deploy command** above upload versions only. Disable non-pro
 
 `npm run check:integration` builds management and checks real HTTP/database behavior using a disposable synthetic MongoDB database. It requires local database credentials and is not part of Cloudflare Builds. See [integration verification and diagnostics](docs/architecture.md) for cleanup, browser checks and safe error logs.
 
-Run only one app/build/preview/typecheck command at a time because output directories are shared. `npm run start:lite` serves a matching build with Node. `npm run preview:lite` uses the local Cloudflare runtime and `.dev.vars`. Windows OpenNext builds may require WSL.
+Run only one app/build/preview/typecheck command at a time because output directories are shared. `npm run start:lite` serves a matching build with Node. `npm run preview:lite` uses the local Cloudflare runtime and `.dev.vars`. Windows OpenNext builds may require WSL
 
 ## Further documentation
 
