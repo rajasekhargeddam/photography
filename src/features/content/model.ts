@@ -7,6 +7,8 @@ export const categories = [
   'Half Sari',
   'Haldi',
   'Birthday',
+  'Kids',
+  'Newborn',
   'Others',
 ] as const;
 export const contentKinds = [

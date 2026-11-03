@@ -69,17 +69,27 @@ test('lite rejects every management method before database access; management pr
   }
 });
 
-test('Telegram requires lite mode and explicit runtime enablement', () => {
+test('Telegram requires explicit enablement and a production management or lite runtime', () => {
+  const environment: Record<string, string | undefined> = process.env;
   const oldMode = process.env.APP_VARIANT,
-    oldFlag = process.env.TELEGRAM_DISPATCH_ENABLED;
+    oldFlag = process.env.TELEGRAM_DISPATCH_ENABLED,
+    oldNodeEnv = environment['NODE_ENV'];
   try {
-    for (const mode of ['management', 'lite'])
-      for (const flag of ['false', 'true', '']) {
-        process.env.APP_VARIANT = mode;
-        process.env.TELEGRAM_DISPATCH_ENABLED = flag;
-        assert.equal(telegramEnabled(), mode === 'lite' && flag === 'true');
-      }
+    for (const nodeEnv of ['development', 'test', 'production']) {
+      environment['NODE_ENV'] = nodeEnv;
+      for (const mode of ['management', 'lite'])
+        for (const flag of ['false', 'true', '']) {
+          process.env.APP_VARIANT = mode;
+          process.env.TELEGRAM_DISPATCH_ENABLED = flag;
+          assert.equal(
+            telegramEnabled(),
+            (mode === 'lite' || nodeEnv === 'production') && flag === 'true',
+          );
+        }
+    }
   } finally {
+    if (oldNodeEnv === undefined) delete environment['NODE_ENV'];
+    else environment['NODE_ENV'] = oldNodeEnv;
     if (oldMode === undefined) delete process.env.APP_VARIANT;
     else process.env.APP_VARIANT = oldMode;
     if (oldFlag === undefined) delete process.env.TELEGRAM_DISPATCH_ENABLED;

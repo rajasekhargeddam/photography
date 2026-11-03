@@ -91,7 +91,7 @@ async function main() {
     APP_VARIANT: variant,
     APP_ORIGIN: origin,
     NEXT_PUBLIC_SITE_URL: origin,
-    // Real delivery is enabled only in the deployed Worker's runtime config.
+    // Real delivery is enabled separately in the deployed runtime's environment.
     TELEGRAM_DISPATCH_ENABLED: 'false',
     SKIP_NEXT_APP_BUILD: 'false',
   };

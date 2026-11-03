@@ -1,6 +1,12 @@
 # Telegram operation in the unified app
 
-Only the **deployed lite mode** sends notifications in normal operation. It requires compiled APP_VARIANT=lite and runtime TELEGRAM_DISPATCH_ENABLED=true. The flag is configured in wrangler.jsonc. Management mode never sends; local dev/start commands and Cloudflare preview force delivery off. The retired TELEGRAM_LOCAL_DISPATCH_ENABLED setting no longer controls delivery.
+Hosted lite mode and production management mode can send notifications when runtime TELEGRAM_DISPATCH_ENABLED=true. The lite flag is configured in wrangler.jsonc. Local dev/start commands and Cloudflare preview force delivery off. The retired TELEGRAM_LOCAL_DISPATCH_ENABLED setting no longer controls delivery.
+
+## Netlify
+
+Deploy the updated management build (`npm run build`). In Netlify's Production environment, include Functions scope for TELEGRAM_DISPATCH_ENABLED=true, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_ALERTS_SINCE, TELEGRAM_RETRY_SECRET and NEXT_PUBLIC_SITE_URL. Set NEXT_PUBLIC_SITE_URL to the live HTTPS website origin so alert links open the hosted admin. Keep the existing activation cutoff; older requests are intentionally excluded. Redeploy after changing variables. Keep delivery disabled in deploy previews.
+
+Successful callback and quote-confirmation requests trigger the queue via Next.js `after`. The existing Cloudflare scheduler targets the Cloudflare app, not Netlify. For independent retries on Netlify, configure a scheduler to POST to `/api/telegram/retry` with `Authorization: Bearer <TELEGRAM_RETRY_SECRET>`. Without a scheduler, retries depend on subsequent eligible submissions. Do not clear the queue or sent-job records.
 
 ## Messages and queue
 

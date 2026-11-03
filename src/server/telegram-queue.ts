@@ -30,7 +30,7 @@ export async function drainTelegram(
   pause = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms)),
 ) {
-  // Only the explicitly enabled lite runtime owns real delivery.
+  // Delivery requires an explicitly enabled hosted runtime.
   if (deliver === sendTelegram && !telegramEnabled()) return;
   const since = new Date(process.env.TELEGRAM_ALERTS_SINCE ?? '');
   if (
