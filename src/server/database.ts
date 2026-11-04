@@ -14,7 +14,7 @@ import type { ContentRecord } from '../features/content/model';
 import { CallbackService } from './callbacks';
 import type { CallbackRequest } from '../features/contact/model';
 import { PricingService, type PricingRecord } from './pricing';
-import { drainTelegram } from './telegram-queue';
+import { drainTelegram, type TelegramTarget } from './telegram-queue';
 import { QuoteReads, type QuoteRead } from './quote-reads';
 
 // Keep the database connection across hot reloads, not application service instances.
@@ -64,7 +64,8 @@ async function connect(client?: MongoClient, initialize = true) {
       db.collection<PublicationRecord>('contentPublications'),
     ),
     quoteReads: new QuoteReads(db.collection<QuoteRead>('quoteReads')),
-    drainTelegram: () => drainTelegram(db),
+    drainTelegram: (target?: TelegramTarget) =>
+      drainTelegram(db, undefined, undefined, target),
     repository,
     service: new EnquiryService(repository, () => pricing.get()),
     pricing,

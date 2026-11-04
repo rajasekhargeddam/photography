@@ -33,10 +33,17 @@ async function handler(request: Request) {
     telegramEnabled() &&
     shouldCheckNotifications(request.method, path, response.ok)
   ) {
+    const target =
+      path === '/api/callbacks'
+        ? {
+            kind: 'callback' as const,
+            id: (await response.clone().json()).requestId as string,
+          }
+        : { kind: 'quote' as const, id: path.split('/')[3] };
     after(async () => {
       try {
         await withDatabase(async (getDatabase) =>
-          (await getDatabase()).drainTelegram(),
+          (await getDatabase()).drainTelegram(target),
         );
       } catch {
         console.warn(

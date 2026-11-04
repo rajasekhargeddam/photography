@@ -132,6 +132,50 @@ test('durable dispatcher ignores drafts and old records, deduplicates concurrent
     },
   } as unknown as Db;
   try {
+    tables.callbacks.push({
+      ...tables.callbacks[0],
+      _id: 'previous-request',
+    });
+    tables.telegramNotifications.push({
+      _id: 'callback:previous-request',
+      alert: {
+        kind: 'callback',
+        id: 'previous-request',
+        event: 'Birthday',
+        date: '',
+        detailLines: [],
+      },
+      messages: ['Previous request'],
+      sent: false,
+      attempts: 0,
+      nextAttempt: new Date(0),
+    });
+    const targeted: string[] = [];
+    await drainTelegram(
+      db,
+      async (text) => {
+        targeted.push(text);
+      },
+      async () => {},
+      { kind: 'callback', id: 'call' },
+    );
+    assert.equal(targeted.length, 1);
+    assert.ok(targeted[0].includes('Request: call'));
+    assert.equal(
+      tables.callbacks.find((row) => row._id === 'previous-request')
+        ?.telegramQueued,
+      undefined,
+    );
+    assert.equal(
+      tables.telegramNotifications.find(
+        (row) => row._id === 'callback:previous-request',
+      )?.sent,
+      false,
+    );
+    // Reset this scenario before exercising global retry delivery below.
+    tables.callbacks.pop();
+    delete tables.callbacks[0].telegramQueued;
+    tables.telegramNotifications.length = 0;
     let attempts = 0;
     const deliver = async () => {
       attempts++;
@@ -229,6 +273,46 @@ test('durable dispatcher ignores drafts and old records, deduplicates concurrent
     assert.equal(new Set(received).size, 4);
     assert.ok(received[1].includes('part 2/4'));
     assert.ok(received.every((text) => text.length <= 4096));
+    // A worker paused between parts must stop if its lease expires or is taken over.
+    for (const takeover of [false, true]) {
+      tables.telegramNotifications.push({
+        _id: `stale-${takeover}`,
+        alert: longAlert,
+        messages: ['first', 'second'],
+        nextPart: 0,
+        sent: false,
+        attempts: 0,
+        nextAttempt: new Date(0),
+      });
+      for (const row of tables.telegramNotifications)
+        row.nextAttempt = new Date(0);
+      const sent: string[] = [];
+      await drainTelegram(
+        db,
+        async (text) => {
+          sent.push(text);
+        },
+        async () => {
+          const dispatcher = tables.telegramNotifications.find(
+            (row) => row._id === 'dispatcher',
+          )!;
+          dispatcher.nextAttempt = takeover
+            ? new Date(Date.now() + 120000)
+            : new Date(0);
+          if (takeover) dispatcher.lease = 'replacement-worker';
+        },
+      );
+      assert.deepEqual(sent, ['first']);
+      const stale = tables.telegramNotifications.find(
+        (row) => row._id === `stale-${takeover}`,
+      )!;
+      assert.equal(stale.nextPart, 1);
+      assert.equal(stale.sent, false);
+      tables.telegramNotifications.splice(
+        tables.telegramNotifications.indexOf(stale),
+        1,
+      );
+    }
   } finally {
     for (const key of [
       'TELEGRAM_BOT_TOKEN',

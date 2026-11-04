@@ -23,14 +23,16 @@ type Job = {
   attempts: number;
 };
 type Marked = { telegramQueued?: boolean };
+export type TelegramTarget = Pick<TelegramAlert, 'kind' | 'id'>;
 
 export async function drainTelegram(
   db: Db,
   deliver = sendTelegram,
   pause = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  target?: TelegramTarget,
 ) {
-  // Delivery requires an explicitly enabled hosted runtime.
+  // Delivery is active in every mode when the bot settings are configured.
   if (deliver === sendTelegram && !telegramEnabled()) return;
   const since = new Date(process.env.TELEGRAM_ALERTS_SINCE ?? '');
   if (
@@ -63,6 +65,7 @@ export async function drainTelegram(
   // Reconcile persisted requests: a crash after saving cannot permanently lose an alert.
   for (const record of await callbacks
     .find({
+      ...(target ? { _id: target.kind === 'callback' ? target.id : '' } : {}),
       telegramQueued: { $ne: true },
       createdAt: { $gte: since.toISOString() },
     })
@@ -77,6 +80,7 @@ export async function drainTelegram(
   }
   for (const record of await quotes
     .find({
+      ...(target ? { _id: target.kind === 'quote' ? target.id : '' } : {}),
       telegramQueued: { $ne: true },
       status: 'CONFIRMED',
       confirmedAt: { $gte: since },
@@ -110,7 +114,11 @@ export async function drainTelegram(
   let cooldown = 3100;
   try {
     const pending = await jobs
-      .find({ sent: false, nextAttempt: { $lte: new Date() } })
+      .find({
+        ...(target ? { _id: `${target.kind}:${target.id}` } : {}),
+        sent: false,
+        nextAttempt: { $lte: new Date() },
+      })
       .sort({ nextAttempt: 1 })
       .limit(3)
       .toArray();
@@ -144,6 +152,18 @@ export async function drainTelegram(
         let part = job.nextPart ?? 0;
         while (part < job.messages.length && delivered < 3) {
           if (delivered) await pause(3100);
+          // A suspended worker may resume after another instance took over.
+          // Renew only an unexpired lease before sending any further parts.
+          const owned = await jobs.findOneAndUpdate(
+            {
+              _id: 'dispatcher',
+              lease,
+              nextAttempt: { $gte: new Date() },
+            },
+            { $set: { nextAttempt: new Date(Date.now() + 120000) } },
+            { returnDocument: 'after' },
+          );
+          if (!owned) return;
           await deliver(job.messages[part]);
           delivered++;
           part++;

@@ -91,13 +91,11 @@ async function main() {
     APP_VARIANT: variant,
     APP_ORIGIN: origin,
     NEXT_PUBLIC_SITE_URL: origin,
-    // Real delivery is enabled separately in the deployed runtime's environment.
-    TELEGRAM_DISPATCH_ENABLED: 'false',
     SKIP_NEXT_APP_BUILD: 'false',
   };
   acquireLock();
   console.log(
-    `${action}: ${variant} (${origin}). Local Telegram delivery disabled.`,
+    `${action}: ${variant} (${origin}). Telegram delivery follows configured credentials.`,
   );
   if (action === 'dev') {
     if (existsSync(stampPath)) unlinkSync(stampPath);
@@ -155,17 +153,7 @@ async function main() {
   if (action === 'start')
     return run('next', ['start', '--port', String(port)], env);
   if (action === 'preview')
-    return run(
-      'cloudflare',
-      [
-        'preview',
-        '--config',
-        'wrangler.jsonc',
-        '--var',
-        'TELEGRAM_DISPATCH_ENABLED:false',
-      ],
-      env,
-    );
+    return run('cloudflare', ['preview', '--config', 'wrangler.jsonc'], env);
   return run(
     'wrangler',
     ['deploy', '--dry-run', '--config', 'wrangler.jsonc'],

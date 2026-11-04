@@ -1,8 +1,7 @@
-import { appVariant } from '../config/app-variant';
-
 export function telegramEnabled() {
-  return (
-    (appVariant() === 'lite' || process.env.NODE_ENV === 'production') &&
-    process.env.TELEGRAM_DISPATCH_ENABLED === 'true'
+  return Boolean(
+    process.env.TELEGRAM_BOT_TOKEN &&
+    process.env.TELEGRAM_CHAT_ID &&
+    !Number.isNaN(Date.parse(process.env.TELEGRAM_ALERTS_SINCE ?? '')),
   );
 }

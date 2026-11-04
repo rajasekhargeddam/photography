@@ -120,7 +120,7 @@ export function createApi(getServices: () => Promise<Services>) {
             'Please wait before sending another callback request.',
           );
         await callbacks.save(input.data);
-        return json({ success: true }, 200);
+        return json({ success: true, requestId: input.data.requestId }, 200);
       }
       if (path.startsWith('/api/admin/'))
         return adminApi(request, getServices, token, contentPath);
