@@ -8,6 +8,7 @@ export default defineConfig([
   ...nextTs,
   prettier,
   globalIgnores([
+    '.local-qa/**',
     '.next/**',
     '.open-next/**',
     '.wrangler/**',

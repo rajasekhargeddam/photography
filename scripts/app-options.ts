@@ -41,13 +41,25 @@ export function commandOptions(
     if (port < 1024 || port > 65535)
       throw new Error('Port must be between 1024 and 65535.');
   }
+  const hostedManagement =
+    variant === 'management' &&
+    action === 'build' &&
+    environment.NETLIFY === 'true';
   const local =
-    ['dev', 'start', 'typecheck'].includes(action) || variant === 'management';
-  if (!local && !environment.LITE_SITE_URL)
-    throw new Error('Set LITE_SITE_URL to the company HTTPS website origin.');
-  const origin = local
-    ? `http://localhost:${port}`
-    : environment.LITE_SITE_URL!;
+    ['dev', 'start', 'typecheck'].includes(action) ||
+    (variant === 'management' && !hostedManagement);
+  const hostedOrigin = hostedManagement
+    ? environment.NEXT_PUBLIC_SITE_URL
+    : environment.LITE_SITE_URL;
+  if (!local && !hostedOrigin)
+    throw new Error(
+      'Set the public HTTPS origin: NEXT_PUBLIC_SITE_URL for Netlify or LITE_SITE_URL for Cloudflare.',
+    );
+  if (hostedManagement && environment.APP_ORIGIN !== hostedOrigin)
+    throw new Error(
+      'APP_ORIGIN must match NEXT_PUBLIC_SITE_URL for the Netlify build.',
+    );
+  const origin = local ? `http://localhost:${port}` : hostedOrigin!;
   const url = new URL(origin);
   if (
     url.origin !== origin ||
@@ -56,7 +68,7 @@ export function commandOptions(
     (!local && url.protocol !== 'https:')
   )
     throw new Error(
-      'LITE_SITE_URL must be an HTTPS origin without path, credentials, query or trailing slash.',
+      'The public site URL must be an HTTPS origin without path, credentials, query or trailing slash.',
     );
   return { action, variant, port, origin };
 }

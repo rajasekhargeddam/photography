@@ -47,7 +47,10 @@ async function main() {
           ...process.env,
           MONGODB_DATABASE: name,
           APP_ORIGIN: origin,
-          TELEGRAM_DISPATCH_ENABLED: 'false',
+          TELEGRAM_BOT_TOKEN: '',
+          TELEGRAM_CHAT_ID: '',
+          TELEGRAM_ALERTS_SINCE: '',
+          APP_ALLOWED_ORIGINS: 'https://qa-studio.netlify.app',
           NODE_ENV: 'production',
         },
         windowsHide: true,
@@ -91,6 +94,23 @@ async function main() {
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     assert.equal((await call('/admin/requests')).status, 307);
+    assert.equal(
+      (
+        await call(
+          '/api/callbacks',
+          'POST',
+          {},
+          { Origin: 'https://qa-studio.netlify.app' },
+        )
+      ).status,
+      400,
+      'Trusted alias reaches input validation instead of failing the origin check',
+    );
+    assert.equal(
+      (await call('/api/telegram/retry', 'POST')).status,
+      503,
+      'Integration server cannot send Telegram notifications',
+    );
     assert.equal((await call('/api/admin/enquiries')).status, 401);
     const login = await call('/api/auth/login', 'POST', { email, password });
     assert.equal(login.status, 200);

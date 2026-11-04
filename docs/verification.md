@@ -1,5 +1,14 @@
 # Verification record
 
+## Netlify release preparation — 4 November 2026
+
+- Fixed management builds on Netlify overwriting the public URL with localhost. Hosted builds now require matching APP_ORIGIN and NEXT_PUBLIC_SITE_URL HTTPS origins.
+- Added explicit APP_ALLOWED_ORIGINS aliases for the Netlify address and domain transition. Foreign origins, cross-site submissions and missing POST origins remain rejected.
+- All 90 automated tests, ESLint, formatting and TypeScript checks passed. An isolated production build passed using https://mydreamphotography.in; generated sitemap URLs use that origin.
+- Real Next.js/MongoDB integration passed for login/logout, protected routes, callbacks and retries, rate limits, content validation and operations, quote save/edit/retry/confirm, and admin snapshots. The trusted-alias request reached input validation. Telegram was disabled by clearing the test server's credentials. The temporary QA database was removed; studio records were not changed.
+- The first restricted local build stalled; the isolated build passed with normal local process access. The existing development server was left running. The nested QA copy produced a workspace-root warning, but the production build completed.
+- No deployment or push was performed. Netlify runtime configuration, DNS/HTTPS, real message delivery and a live browser submission still require verification at release. This pass did not include a new visual/mobile audit. See [final release settings](netlify-final-release.md).
+
 ## Maintenance phases — 3 November 2026
 
 - Added safe diagnostic categories and correlation IDs for unexpected API failures; tests confirm raw credential-bearing error messages are not returned or logged.

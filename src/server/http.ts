@@ -30,8 +30,25 @@ export async function guarded(work: () => Promise<Response>) {
 export function checkOrigin(request: Request) {
   const origin = request.headers.get('origin');
   const expected = process.env.APP_ORIGIN ?? new URL(request.url).origin;
+  // Explicit aliases support a domain cutover without accepting arbitrary hosts.
+  const allowed = [
+    expected,
+    ...(process.env.APP_ALLOWED_ORIGINS ?? '').split(','),
+  ]
+    .map((value) => value.trim())
+    .filter((value) => {
+      try {
+        const url = new URL(value);
+        return (
+          url.origin === value &&
+          (value === expected || url.protocol === 'https:')
+        );
+      } catch {
+        return false;
+      }
+    });
   if (
-    (origin && origin !== expected) ||
+    (origin && !allowed.includes(origin)) ||
     request.headers.get('sec-fetch-site') === 'cross-site'
   )
     throw new ApiFailure(403, 'Origin not allowed.');

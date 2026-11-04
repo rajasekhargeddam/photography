@@ -17,3 +17,4 @@ Thumbs.db
 
 .app-command.lock
 .app-build.json
+.local-qa/
